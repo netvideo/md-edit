@@ -1,0 +1,3995 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word MD Editor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --word-blue: #2B579A;
+    --word-blue-hover: #106EBE;
+    --ribbon-bg: #F3F2F1;
+    --ribbon-border: #E1DFDD;
+    --btn-hover: #C7E0F4;
+    --text-primary: #323130;
+    --text-secondary: #605E5C;
+    --white: #FFFFFF;
+    --border-color: #E1DFDD;
+    --code-bg: #F3F2F1;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+}
+
+/* 深色主题变量 */
+.dark-theme {
+    --word-blue: #4A90E2;
+    --word-blue-hover: #6BAEF2;
+    --ribbon-bg: #2D2D2D;
+    --ribbon-border: #404040;
+    --btn-hover: #3A3A3A;
+    --text-primary: #E1E1E1;
+    --text-secondary: #A0A0A0;
+    --white: #1E1E1E;
+    --border-color: #404040;
+    --code-bg: #2D2D2D;
+}
+
+body {
+    font-family: "Calibri", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    height: 100vh;
+    overflow: hidden;
+    color: var(--text-primary);
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: var(--white);
+}
+
+/* Ribbon 工具栏 */
+.ribbon {
+    background: var(--ribbon-bg);
+    border-bottom: 1px solid var(--ribbon-border);
+    flex-shrink: 0;
+}
+
+.ribbon-tabs {
+    display: flex;
+    background: var(--white);
+    border-bottom: 1px solid var(--ribbon-border);
+}
+
+.ribbon-tab {
+    padding: 8px 20px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 14px;
+    color: var(--text-primary);
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+}
+
+.ribbon-tab:hover {
+    background: var(--btn-hover);
+}
+
+.ribbon-tab.active {
+    border-bottom-color: var(--word-blue);
+    color: var(--word-blue);
+    font-weight: 600;
+}
+
+.ribbon-panel {
+    display: none;
+    padding: 12px 16px;
+    background: var(--ribbon-bg);
+}
+
+.ribbon-panel.active {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.ribbon-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ribbon-group-title {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--ribbon-border);
+}
+
+.ribbon-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.ribbon-buttons {
+    display: flex;
+    gap: 2px;
+}
+
+.color-picker-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.color-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+input[type="color"] {
+    width: 32px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+input[type="color"]:hover {
+    border-color: var(--word-blue);
+}
+
+.ribbon-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+}
+
+.ribbon-btn:hover {
+    background: var(--btn-hover);
+    border-color: var(--word-blue);
+}
+
+.ribbon-btn.active {
+    background: var(--word-blue);
+    color: white;
+    border-color: var(--word-blue);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.ribbon-btn .icon {
+    font-family: "Times New Roman", serif;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.ribbon-btn .icon-bold { font-weight: 900; }
+.ribbon-btn .icon-italic { font-style: italic; }
+.ribbon-btn .icon-underline { text-decoration: underline; }
+.ribbon-btn .icon-strike { text-decoration: line-through; }
+.ribbon-btn .icon-subscript, 
+.ribbon-btn .icon-superscript {
+    font-size: 11px;
+    vertical-align: super;
+}
+
+.ribbon-btn .icon-format-painter {
+    font-size: 16px;
+    color: #666;
+}
+
+.ribbon-btn .icon-image {
+    font-size: 18px;
+}
+
+.ribbon-btn .icon-formula,
+.ribbon-btn .icon-formula-block {
+    font-size: 18px;
+    font-weight: normal;
+}
+
+.ribbon-btn.format-painter-active {
+    background: var(--word-blue);
+    color: white;
+}
+
+.ribbon-btn.format-painter-active .icon-format-painter {
+    color: white;
+}
+
+.ribbon-select {
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    background: var(--white);
+    font-size: 13px;
+    min-width: 120px;
+    cursor: pointer;
+}
+
+.ribbon-select:hover {
+    border-color: var(--word-blue);
+}
+
+#font-size {
+    width: 50px;
+    min-width: 50px;
+}
+
+.style-select {
+    min-width: 140px;
+}
+
+.ribbon-toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ribbon-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    transition: background 0.15s;
+}
+
+.ribbon-toggle:hover {
+    background: var(--btn-hover);
+}
+
+.ribbon-toggle input {
+    accent-color: var(--word-blue);
+    width: 14px;
+    height: 14px;
+}
+
+/* 主编辑区域 */
+.main-area {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* 右侧面板容器 */
+.side-panels {
+    display: flex;
+    flex-shrink: 0;
+}
+
+/* 左侧标尺 */
+.ruler {
+    width: 40px;
+    background: var(--ribbon-bg);
+    border-right: 1px solid var(--border-color);
+    padding-top: 8px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.ruler.hidden {
+    display: none;
+}
+
+.ruler-marks {
+    position: relative;
+    height: 20px;
+}
+
+.ruler-mark {
+    position: absolute;
+    transform: translateX(-50%);
+}
+
+.ruler-mark.major::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 4px;
+    width: 1px;
+    height: 8px;
+    background: var(--text-secondary);
+}
+
+/* 编辑器区域 */
+.editor-wrapper {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+}
+
+.markdown-source {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    padding: 40px 60px;
+    border: none;
+    resize: none;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    background: var(--white);
+    display: none;
+}
+
+.markdown-source.show {
+    display: block;
+}
+
+.editor {
+    flex: 1;
+    padding: 40px 60px;
+    overflow-y: auto;
+    outline: none;
+    line-height: 1.6;
+    font-size: 14px;
+    color: var(--text-primary);
+    text-align: left;
+}
+
+.editor:empty::before {
+    content: attr(data-placeholder);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.editor.show {
+    display: none;
+}
+
+/* 编辑器内容样式 */
+.editor h1 {
+    font-size: 28pt;
+    font-weight: bold;
+    margin: 18pt 0 10pt 0;
+    line-height: 1.3;
+    color: #1a1a1a;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8pt;
+}
+
+.editor h2 {
+    font-size: 22pt;
+    font-weight: bold;
+    margin: 16pt 0 10pt 0;
+    line-height: 1.4;
+    color: #2c3e50;
+}
+
+.editor h3 {
+    font-size: 18pt;
+    font-weight: bold;
+    margin: 14pt 0 10pt 0;
+    line-height: 1.4;
+    color: #34495e;
+}
+
+.editor h4 {
+    font-size: 16pt;
+    font-weight: bold;
+    margin: 12pt 0 10pt 0;
+    line-height: 1.4;
+    color: #566573;
+}
+
+.editor h5, .editor h6 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin: 12pt 0 8pt 0;
+    line-height: 1.5;
+    color: #7f8c8d;
+}
+
+.editor p {
+    margin: 0 0 12pt 0;
+    text-align: justify;
+}
+
+.editor ul, .editor ol {
+    margin: 8pt 0 12pt 24pt;
+}
+
+.editor ul {
+    list-style-type: disc;
+}
+
+.editor ol {
+    list-style-type: decimal;
+}
+
+.editor li {
+    margin-bottom: 4pt;
+    padding-left: 6pt;
+}
+
+.editor li.task-item {
+    list-style-type: none;
+    position: relative;
+    padding-left: 28px;
+    line-height: 1.6;
+}
+
+.editor li.task-item::before {
+    content: '☐';
+    position: absolute;
+    left: 0;
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.editor li.task-item.checked::before {
+    content: '☑';
+    color: var(--success-color);
+}
+
+.editor blockquote {
+    border-left: 4px solid var(--word-blue);
+    padding-left: 16pt;
+    margin: 16pt 0;
+    color: var(--text-secondary);
+    background: linear-gradient(to right, rgba(43, 87, 154, 0.05), transparent);
+    padding: 12pt 16pt;
+    border-radius: 0 4px 4px 0;
+}
+
+.editor blockquote p {
+    margin-bottom: 0;
+}
+
+.editor blockquote:last-child {
+    margin-bottom: 0;
+}
+
+.editor hr {
+    border: none;
+    border-top: 2px solid var(--border-color);
+    margin: 16pt 0;
+}
+
+.editor code {
+    font-family: Consolas, "Courier New", monospace;
+    background: var(--code-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #d63384;
+    border: 1px solid var(--border-color);
+}
+
+.editor pre {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 16pt;
+    margin: 16pt 0;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.editor pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    border: none;
+}
+
+.editor a {
+    color: var(--word-blue);
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.editor a:hover {
+    color: var(--word-blue-hover);
+}
+
+.editor mark {
+    background-color: #ffeb3b;
+    color: inherit;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.editor img {
+    max-width: 100%;
+    height: auto;
+    margin: 16pt 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: block;
+    cursor: pointer;
+    position: relative;
+}
+
+.editor img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.editor img.selected {
+    outline: 3px solid var(--word-blue);
+    outline-offset: 2px;
+}
+
+.editor .katex {
+    font-size: 1.1em;
+}
+
+.editor .katex-display {
+    margin: 16pt 0;
+    padding: 12pt;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+.editor .formula-block {
+    display: block;
+    margin: 16pt 0;
+    padding: 16pt;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
+    text-align: center;
+    overflow-x: auto;
+}
+
+.editor .formula-inline {
+    padding: 0 4px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 2px;
+}
+
+.editor table {
+    border-collapse: collapse;
+    margin: 16pt 0;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 13px;
+}
+
+.editor table th,
+.editor table td {
+    border: 2px solid #E1DFDD;
+    padding: 8pt 12pt;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.editor table th {
+    background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+    font-weight: 600;
+    color: #323130;
+    border-bottom: 2px solid #E1DFDD;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.editor table td:first-child,
+.editor table th:first-child {
+    border-left: 2px solid #E1DFDD;
+}
+
+.editor table td:last-child,
+.editor table th:last-child {
+    border-right: 2px solid #E1DFDD;
+}
+
+.editor table tr:nth-child(even) td {
+    background: #f9f9f9;
+}
+
+.editor table tr:hover td {
+    background: #f0f7ff;
+    transition: background 0.2s;
+}
+
+.editor table tr:last-child td {
+    border-bottom: 2px solid #E1DFDD;
+}
+
+.editor table thead tr {
+    background: var(--ribbon-bg);
+}
+
+.editor table tbody tr {
+    transition: background 0.2s;
+}
+
+.editor table tbody tr:hover {
+    background: #f0f7ff;
+}
+
+/* 对齐样式 */
+.editor .align-left {
+    text-align: left;
+}
+
+.editor .align-center {
+    text-align: center;
+}
+
+.editor .align-right {
+    text-align: right;
+}
+
+.editor .align-justify {
+    text-align: justify;
+}
+
+/* 文本格式样式 */
+.editor em {
+    font-style: italic;
+}
+
+.editor strong {
+    font-weight: bold;
+}
+
+.editor b {
+    font-weight: bold;
+}
+
+.editor s,
+.editor strike {
+    text-decoration: line-through;
+}
+
+.editor u {
+    text-decoration: underline;
+}
+
+.editor .tree-line {
+    font-family: monospace;
+    white-space: pre;
+    color: var(--text-primary);
+}
+
+.editor sub {
+    vertical-align: sub;
+    font-size: smaller;
+}
+
+.editor sup {
+    vertical-align: super;
+    font-size: smaller;
+}
+
+/* 右侧样式面板 */
+.style-panel {
+    width: 180px;
+    background: var(--white);
+    border-left: 1px solid var(--border-color);
+    padding: 12px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.style-panel.hidden {
+    display: none;
+}
+
+/* 大纲面板 */
+.outline-panel {
+    width: 200px;
+    background: var(--white);
+    border-left: 1px solid var(--border-color);
+    padding: 12px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.outline-panel.hidden {
+    display: none;
+}
+
+.outline-panel-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--text-primary);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.outline-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.outline-count {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+.outline-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.outline-item {
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.15s;
+    line-height: 1.4;
+}
+
+.outline-item:hover {
+    background: var(--btn-hover);
+    color: var(--word-blue);
+}
+
+.outline-item.active {
+    background: var(--word-blue);
+    color: white;
+}
+
+.outline-item.level-1 {
+    font-weight: bold;
+    font-size: 14px;
+    padding-left: 8px;
+}
+
+.outline-item.level-2 {
+    font-weight: 600;
+    font-size: 13px;
+    padding-left: 20px;
+}
+
+.outline-item.level-3 {
+    font-size: 13px;
+    padding-left: 32px;
+}
+
+.outline-item.level-4 {
+    font-size: 12px;
+    padding-left: 44px;
+    color: var(--text-secondary);
+}
+
+.outline-item.level-5,
+.outline-item.level-6 {
+    font-size: 12px;
+    padding-left: 56px;
+    color: var(--text-secondary);
+}
+
+.outline-empty {
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* 统计面板 */
+.stats-panel {
+    width: 160px;
+    background: var(--white);
+    border-left: 1px solid var(--border-color);
+    padding: 12px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-panel.hidden {
+    display: none;
+}
+
+.stats-panel-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--text-primary);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 12px;
+}
+
+.stats-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.stats-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stats-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.stats-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.style-panel-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--text-primary);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.style-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.style-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.style-label {
+    color: var(--text-secondary);
+}
+
+.style-value {
+    font-weight: 500;
+}
+
+.style-actions {
+    margin-top: auto;
+}
+
+.style-btn {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--white);
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.style-btn:hover {
+    background: var(--btn-hover);
+}
+
+/* 底部状态栏 */
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 16px;
+    background: var(--ribbon-bg);
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-btn {
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--border-color);
+    background: var(--white);
+    border-radius: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.1s;
+}
+
+.status-btn:hover {
+    background: var(--btn-hover);
+    border-color: var(--word-blue);
+}
+
+.status-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 弹窗 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--white);
+    border-radius: 4px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 320px;
+    max-width: 90%;
+}
+
+.modal-title {
+    padding: 16px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--word-blue);
+}
+
+.form-group textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    font-size: 14px;
+    font-family: Consolas, monospace;
+    resize: vertical;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--word-blue);
+}
+
+.formula-preview {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    min-height: 50px;
+}
+
+.formula-preview label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+#formula-preview-content {
+    font-size: 16px;
+    text-align: center;
+    padding: 8px;
+}
+
+.formula-help {
+    margin-top: 12px;
+    font-size: 12px;
+}
+
+.formula-help a {
+    color: var(--word-blue);
+    text-decoration: none;
+}
+
+.formula-help a:hover {
+    text-decoration: underline;
+}
+
+.modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.btn {
+    padding: 8px 20px;
+    border-radius: 2px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+}
+
+.btn-primary {
+    background: var(--word-blue);
+    color: white;
+    border-color: var(--word-blue);
+}
+
+.btn-primary:hover {
+    background: var(--word-blue-hover);
+}
+
+.btn-secondary {
+    background: var(--white);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background: var(--btn-hover);
+}
+
+.table-preview {
+    margin-top: 12px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    display: grid;
+    gap: 2px;
+    width: fit-content;
+}
+
+.table-preview .cell {
+    width: 20px;
+    height: 20px;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+}
+
+.table-preview .cell.active {
+    background: var(--word-blue);
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* 选中文本时的高亮 */
+::selection {
+    background: #b4d7ff;
+}
+
+::-moz-selection {
+    background: #b4d7ff;
+}
+
+/* 焦点状态 */
+.editor:focus {
+    outline: none;
+}
+
+/* 滚动条美化 */
+.editor::-webkit-scrollbar {
+    width: 12px;
+}
+
+.editor::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+.editor::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #888, #555);
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+}
+
+.editor::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #666, #444);
+}
+
+/* 深色主题下的滚动条 */
+.dark-theme .editor::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.dark-theme .editor::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #555, #333);
+    border: 2px solid #1a1a1a;
+}
+
+.dark-theme .editor::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #666, #444);
+}
+
+/* 加载动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.editor {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* 编辑器内元素的交互效果 */
+.editor *:hover {
+    outline: 1px dashed transparent;
+}
+
+.editor code:hover {
+    background: #e9ecef;
+}
+
+.editor blockquote:hover {
+    background: linear-gradient(to right, rgba(43, 87, 154, 0.1), transparent);
+}
+
+/* 打印样式增强 */
+@media print {
+    .editor h1 {
+        font-size: 24pt;
+    }
+    .editor h2 {
+        font-size: 18pt;
+    }
+    .editor h3 {
+        font-size: 14pt;
+    }
+    .editor table {
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+    .editor blockquote {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    .editor img {
+        max-width: 100%;
+        page-break-inside: avoid;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .ribbon,
+    .ruler,
+    .style-panel,
+    .status-bar {
+        display: none !important;
+    }
+
+    .app-container {
+        display: block;
+        height: auto;
+        background: white;
+    }
+
+    .main-area {
+        display: block;
+        overflow: visible;
+    }
+
+    .editor {
+        padding: 0;
+        overflow: visible;
+        background: white;
+    }
+
+    .markdown-source {
+        display: none;
+    }
+
+    .editor.show {
+        display: block;
+    }
+
+    body {
+        background: white;
+        font-size: 12pt;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+    }
+
+    p {
+        page-break-inside: avoid;
+    }
+
+    blockquote {
+        break-inside: avoid;
+    }
+
+    table {
+        break-inside: avoid;
+    }
+
+    img {
+        max-width: 100%;
+        page-break-inside: avoid;
+    }
+
+    a {
+        text-decoration: none;
+        color: black;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部Ribbon工具栏 -->
+        <div class="ribbon">
+            <div class="ribbon-tabs">
+                <div class="ribbon-tab active" data-tab="home">开始</div>
+                <div class="ribbon-tab" data-tab="insert">插入</div>
+                <div class="ribbon-tab" data-tab="view">视图</div>
+                <div class="ribbon-tab" data-tab="file">文件</div>
+            </div>
+            
+            <!-- 开始选项卡 -->
+            <div class="ribbon-panel active" id="panel-home">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">字体</div>
+                    <div class="ribbon-row">
+                        <select class="ribbon-select" id="font-family" title="字体">
+                            <option value="Calibri">Calibri</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Microsoft YaHei">微软雅黑</option>
+                            <option value="SimSun">宋体</option>
+                            <option value="Consolas">Consolas</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Tahoma">Tahoma</option>
+                            <option value="Trebuchet MS">Trebuchet MS</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                            <option value="Impact">Impact</option>
+                        </select>
+                        <select class="ribbon-select" id="font-size" title="字号">
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="14">14</option>
+                            <option value="16">16</option>
+                            <option value="18">18</option>
+                            <option value="20">20</option>
+                            <option value="22">22</option>
+                            <option value="24">24</option>
+                            <option value="26">26</option>
+                            <option value="28">28</option>
+                            <option value="32">32</option>
+                            <option value="36">36</option>
+                            <option value="48">48</option>
+                            <option value="72">72</option>
+                        </select>
+                    </div>
+                    <div class="ribbon-row">
+                        <select class="ribbon-select" id="line-height" title="行高">
+                            <option value="1">单倍行距</option>
+                            <option value="1.15">1.15倍</option>
+                            <option value="1.5" selected>1.5倍</option>
+                            <option value="2">2倍</option>
+                            <option value="2.5">2.5倍</option>
+                            <option value="3">3倍</option>
+                        </select>
+                        <select class="ribbon-select" id="letter-spacing" title="字间距">
+                            <option value="normal">标准</option>
+                            <option value="1px">紧凑</option>
+                            <option value="2px">宽松</option>
+                            <option value="3px">很宽松</option>
+                        </select>
+                    </div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-bold" title="加粗 (Ctrl+B)">
+                            <span class="icon icon-bold">B</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-italic" title="斜体 (Ctrl+I)">
+                            <span class="icon icon-italic">I</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-underline" title="下划线 (Ctrl+U)">
+                            <span class="icon icon-underline">U</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-strike" title="删除线">
+                            <span class="icon icon-strike">S</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-subscript" title="下标">
+                            <span class="icon icon-subscript">X₂</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-superscript" title="上标">
+                            <span class="icon icon-superscript">X²</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-format-painter" title="格式刷 (双击锁定)">
+                            <span class="icon icon-format-painter">♯</span>
+                        </button>
+                    </div>
+                    <div class="ribbon-row">
+                        <div class="color-picker-group">
+                            <label class="color-label">文字颜色:</label>
+                            <input type="color" id="text-color" value="#000000" title="文字颜色">
+                        </div>
+                        <div class="color-picker-group">
+                            <label class="color-label">背景颜色:</label>
+                            <input type="color" id="bg-color" value="#ffffff" title="背景颜色">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">段落</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-align-left" title="左对齐">
+                            <span class="icon icon-align-left">↶</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-align-center" title="居中对齐">
+                            <span class="icon icon-align-center">↔</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-align-right" title="右对齐">
+                            <span class="icon icon-align-right">↷</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-align-justify" title="两端对齐">
+                            <span class="icon icon-align-justify">⇔</span>
+                        </button>
+                    </div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-bullet" title="项目符号列表">
+                            <span class="icon icon-bullet">•</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-numbering" title="编号列表">
+                            <span class="icon icon-numbering">1.</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-task" title="任务列表">
+                            <span class="icon icon-task">☐</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-quote" title="引用">
+                            <span class="icon icon-quote">❝</span>
+                        </button>
+                    </div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-outdent" title="减少缩进">
+                            <span class="icon icon-outdent">⇤</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-indent" title="增加缩进">
+                            <span class="icon icon-indent">⇥</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-hr" title="水平线">
+                            <span class="icon icon-hr">―</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">样式</div>
+                    <div class="ribbon-row">
+                        <select class="ribbon-select style-select" id="style-select" title="样式">
+                            <option value="p">正文</option>
+                            <option value="h1">标题 1</option>
+                            <option value="h2">标题 2</option>
+                            <option value="h3">标题 3</option>
+                            <option value="h4">标题 4</option>
+                            <option value="h5">标题 5</option>
+                            <option value="h6">标题 6</option>
+                            <option value="code">代码</option>
+                            <option value="blockquote">引用</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 插入选项卡 -->
+            <div class="ribbon-panel" id="panel-insert">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">表格</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-table" title="插入表格">
+                            <span class="icon icon-table">⊞</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">链接</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-link" title="插入链接">
+                            <span class="icon icon-link">🔗</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">图片</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-image" title="插入图片">
+                            <span class="icon icon-image">🖼</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">公式</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-formula-inline" title="行内公式">
+                            <span class="icon icon-formula">∑</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-formula-block" title="独立公式">
+                            <span class="icon icon-formula-block">∫</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 视图选项卡 -->
+            <div class="ribbon-panel" id="panel-view">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">显示</div>
+                    <div class="ribbon-row ribbon-toggles">
+                        <label class="ribbon-toggle">
+                            <input type="checkbox" id="toggle-ruler" checked>
+                            <span>标尺</span>
+                        </label>
+                        <label class="ribbon-toggle">
+                            <input type="checkbox" id="toggle-panel" checked>
+                            <span>样式面板</span>
+                        </label>
+                        <label class="ribbon-toggle">
+                            <input type="checkbox" id="toggle-outline" checked>
+                            <span>大纲面板</span>
+                        </label>
+                        <label class="ribbon-toggle">
+                            <input type="checkbox" id="toggle-stats">
+                            <span>统计面板</span>
+                        </label>
+                        <label class="ribbon-toggle">
+                            <input type="checkbox" id="toggle-markdown">
+                            <span>Markdown源码</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">视图</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-fullscreen" title="全屏编辑">
+                            <span class="icon">⛶</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">主题</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-theme-light" title="浅色主题">
+                            <span class="icon icon-theme-light">☀</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-theme-dark" title="深色主题">
+                            <span class="icon icon-theme-dark">🌙</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 文件选项卡 -->
+            <div class="ribbon-panel" id="panel-file">
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">新建</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-new" title="新建文件">
+                            <span class="icon icon-new">📄</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">打开</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-open" title="打开文件">
+                            <span class="icon icon-open">📂</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">保存</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-save" title="保存文件">
+                            <span class="icon icon-save">💾</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-save-as" title="另存为">
+                            <span class="icon icon-save-as">💾⇧</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="ribbon-group">
+                    <div class="ribbon-group-title">导出</div>
+                    <div class="ribbon-row ribbon-buttons">
+                        <button class="ribbon-btn" id="btn-export-html" title="导出HTML">
+                            <span class="icon icon-export">🌐</span>
+                        </button>
+                        <button class="ribbon-btn" id="btn-export-markdown" title="导出Markdown">
+                            <span class="icon icon-markdown">📝</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主编辑区域 -->
+        <div class="main-area">
+            <!-- 左侧标尺 -->
+            <div class="ruler" id="ruler">
+                <div class="ruler-marks">
+                    <div class="ruler-mark major" style="left: 0px;">0</div>
+                    <div class="ruler-mark major" style="left: 100px;">1</div>
+                    <div class="ruler-mark major" style="left: 200px;">2</div>
+                    <div class="ruler-mark major" style="left: 300px;">3</div>
+                    <div class="ruler-mark major" style="left: 400px;">4</div>
+                    <div class="ruler-mark major" style="left: 500px;">5</div>
+                    <div class="ruler-mark major" style="left: 600px;">6</div>
+                </div>
+            </div>
+            
+            <!-- 编辑器区域 -->
+            <div class="editor-wrapper">
+                <!-- Markdown源码视图 -->
+                <textarea class="markdown-source" id="markdown-source" placeholder="在此输入Markdown..."></textarea>
+                
+                <!-- 所见即所得编辑器 -->
+                <div class="editor" id="editor" contenteditable="true" data-placeholder="开始输入...">
+                    <h1>欢迎使用 Word MD Editor</h1>
+                    <p>这是一款模仿 Microsoft Word 界面的所见即所得 Markdown 编辑器。</p>
+                    <p>它结合了 Word 的熟悉界面和 Markdown 的简洁语法，提供直观的编辑体验。</p>
+
+                    <h2>功能特点</h2>
+                    <ul>
+                        <li><b>所见即所得</b> - 实时预览 Markdown 效果</li>
+                        <li><b>Word风格</b> - 熟悉的 Ribbon 工具栏和界面</li>
+                        <li><b>完整格式</b> - 支持加粗、斜体、下划线、删除线、上标、下标</li>
+                        <li><b>段落格式</b> - 支持项目符号、编号列表、引用块、对齐方式</li>
+                        <li><b>样式设置</b> - 字体、字号、行高、字间距、颜色</li>
+                        <li><b>文件管理</b> - 新建、打开、保存、导出文件</li>
+                        <li><b>撤销重做</b> - 完整的历史记录</li>
+                        <li><b>查找替换</b> - 强大的查找和替换功能</li>
+                        <li><b>主题切换</b> - 浅色和深色主题</li>
+                        <li><b>自动保存</b> - 每30秒自动保存内容</li>
+                    </ul>
+
+                    <h2>开始使用</h2>
+                    <p>直接在编辑器中输入内容，使用上方工具栏格式化文本，或切换到 <b>Markdown源码</b> 视图直接编写 Markdown 语法。</p>
+
+                    <blockquote>
+                        <p><b>提示：</b> 尝试使用快捷键提高编辑效率！</p>
+                    </blockquote>
+
+                    <h3>格式快捷键</h3>
+                    <ul>
+                        <li><b>Ctrl + B</b> - 加粗</li>
+                        <li><b>Ctrl + I</b> - 斜体</li>
+                        <li><b>Ctrl + U</b> - 下划线</li>
+                        <li><b>Ctrl + 1-6</b> - 标题1-6级别</li>
+                        <li><b>Ctrl + Z</b> - 撤销</li>
+                        <li><b>Ctrl + Y</b> - 重做</li>
+                        <li><b>Ctrl + F</b> - 查找</li>
+                        <li><b>Ctrl + S</b> - 保存</li>
+                        <li><b>Ctrl + O</b> - 打开文件</li>
+                        <li><b>Ctrl + N</b> - 新建文件</li>
+                    </ul>
+
+                    <h3>插入元素</h3>
+                    <ul>
+                        <li><b>表格</b> - 点击"插入" → "表格"，选择行列数</li>
+                        <li><b>链接</b> - 点击"插入" → "链接"，输入URL和显示文字</li>
+                        <li><b>图片</b> - 点击"插入" → "图片"，支持URL或本地上传</li>
+                        <li><b>水平线</b> - 点击"插入" → "水平线"</li>
+                    </ul>
+
+                    <h3>段落格式</h3>
+                    <ul>
+                        <li><b>项目符号列表</b> - 按回车输入"-"开始列表</li>
+                        <li><b>编号列表</b> - 按回车输入"1."开始列表</li>
+                        <li><b>任务列表</b> - 点击"项目符号"后选择"任务列表"</li>
+                        <li><b>引用块</b> - 点击"引用"按钮</li>
+                        <li><b>对齐方式</b> - 左对齐、居中、右对齐、两端对齐</li>
+                    </ul>
+
+                    <h3>视图切换</h3>
+                    <ul>
+                        <li><b>所见即所得</b> - 实时预览 Markdown 渲染效果</li>
+                        <li><b>Markdown源码</b> - 查看和编辑原始 Markdown 代码</li>
+                        <li><b>标尺显示</b> - 控制左侧标尺的显示</li>
+                        <li><b>样式面板</b> - 控制右侧样式面板的显示</li>
+                    </ul>
+
+                    <hr>
+
+                    <h3>示例代码</h3>
+                    <pre><code>function greet(name) {
+    console.log(`Hello, ${name}!`);
+    return "Welcome to Word MD Editor!";
+}
+
+const editor = new WordMDEditor();
+editor.render();</code></pre>
+
+                    <h3>示例表格</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>功能</th>
+                                <th>快捷键</th>
+                                <th>描述</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>加粗</td>
+                                <td>Ctrl + B</td>
+                                <td>将选中文本设置为粗体</td>
+                            </tr>
+                            <tr>
+                                <td>斜体</td>
+                                <td>Ctrl + I</td>
+                                <td>将选中文本设置为斜体</td>
+                            </tr>
+                            <tr>
+                                <td>下划线</td>
+                                <td>Ctrl + U</td>
+                                <td>为选中文本添加下划线</td>
+                            </tr>
+                            <tr>
+                                <td>撤销</td>
+                                <td>Ctrl + Z</td>
+                                <td>撤销上一次操作</td>
+                            </tr>
+                            <tr>
+                                <td>重做</td>
+                                <td>Ctrl + Y</td>
+                                <td>重做上一次撤销的操作</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>示例图片</h3>
+                    <p>这是一个图片占位符示例：</p>
+                    <img src="https://via.placeholder.com/600x300/2B579A/FFFFFF?text=Word+MD+Editor+Example" alt="示例图片">
+
+                    <h3>示例链接</h3>
+                    <p>点击下面的链接访问 <a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+
+                    <h3>示例任务列表</h3>
+                    <ul>
+                        <li class="task-item checked">完成功能开发</li>
+                        <li class="task-item">优化用户界面</li>
+                        <li class="task-item">添加文档说明</li>
+                        <li class="task-item checked">测试所有功能</li>
+                        <li class="task-item">发布新版本</li>
+                    </ul>
+
+                    <blockquote>
+                        <p><b>提示：</b> 这是一个示例文档，用于展示编辑器的各种功能效果。</p>
+                    </blockquote>
+                </div>
+            </div>
+            
+            <!-- 右侧面板容器 -->
+            <div class="side-panels">
+                <!-- 右侧大纲面板 -->
+                <div class="outline-panel" id="outline-panel">
+                    <div class="outline-panel-title">
+                        <span>文档大纲</span>
+                        <span class="outline-count" id="outline-count">0 个标题</span>
+                    </div>
+                    <div class="outline-list" id="outline-list">
+                        <div class="outline-empty">暂无标题</div>
+                    </div>
+                </div>
+                
+                <!-- 统计面板 -->
+                <div class="stats-panel hidden" id="stats-panel">
+                    <div class="stats-panel-title">文档统计</div>
+                    <div class="stats-content">
+                        <div class="stats-item">
+                            <span class="stats-label">字数</span>
+                            <span class="stats-value" id="stat-words">0</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="stats-label">字符数</span>
+                            <span class="stats-value" id="stat-chars">0</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="stats-label">段落数</span>
+                            <span class="stats-value" id="stat-paragraphs">0</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="stats-label">行数</span>
+                            <span class="stats-value" id="stat-lines">0</span>
+                        </div>
+                        <div class="stats-item">
+                            <span class="stats-label">标题数</span>
+                            <span class="stats-value" id="stat-headings">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧样式面板 -->
+                <div class="style-panel" id="style-panel">
+                    <div class="style-panel-title">样式</div>
+                    <div class="style-info">
+                        <div class="style-item">
+                            <span class="style-label">字体:</span>
+                            <span class="style-value" id="current-font">Calibri</span>
+                        </div>
+                        <div class="style-item">
+                            <span class="style-label">字号:</span>
+                            <span class="style-value" id="current-size">14pt</span>
+                        </div>
+                        <div class="style-item">
+                            <span class="style-label">当前样式:</span>
+                            <span class="style-value" id="current-style">正文</span>
+                        </div>
+                    </div>
+                    <div class="style-actions">
+                        <button class="style-btn" id="clear-format">清除格式</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部状态栏 -->
+        <div class="status-bar">
+            <div class="status-item" id="file-status">
+                <span id="file-name">未命名</span>
+                <span id="file-status-icon">•</span>
+            </div>
+            <div class="status-item" id="word-count">字数: 0</div>
+            <div class="status-item" id="cursor-position">行 1, 列 1</div>
+            <div class="status-item" id="view-mode">视图: 所见即所得</div>
+            <div class="status-item">
+                <button class="status-btn" id="btn-undo" title="撤销 (Ctrl+Z)">↶</button>
+                <button class="status-btn" id="btn-redo" title="重做 (Ctrl+Y)">↷</button>
+                <button class="status-btn" id="btn-find" title="查找 (Ctrl+F)">🔍</button>
+                <button class="status-btn" id="btn-print" title="打印 (Ctrl+P)">🖨</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 插入表格弹窗 -->
+    <div class="modal" id="table-modal">
+        <div class="modal-content">
+            <div class="modal-title">插入表格</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>行数:</label>
+                    <input type="number" id="table-rows" min="1" max="20" value="3">
+                </div>
+                <div class="form-group">
+                    <label>列数:</label>
+                    <input type="number" id="table-cols" min="1" max="10" value="3">
+                </div>
+                <div class="table-preview" id="table-preview"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="insert-table">插入</button>
+                <button class="btn btn-secondary" onclick="closeModal('table-modal')">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 插入链接弹窗 -->
+    <div class="modal" id="link-modal">
+        <div class="modal-content">
+            <div class="modal-title">插入链接</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>链接地址:</label>
+                    <input type="text" id="link-url" placeholder="https://">
+                </div>
+                <div class="form-group">
+                    <label>显示文字:</label>
+                    <input type="text" id="link-text" placeholder="链接文字">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="insert-link">插入</button>
+                <button class="btn btn-secondary" onclick="closeModal('link-modal')">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 插入图片弹窗 -->
+    <div class="modal" id="image-modal">
+        <div class="modal-content">
+            <div class="modal-title">插入图片</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>图片来源:</label>
+                    <select id="image-source">
+                        <option value="url">网址链接</option>
+                        <option value="upload">本地上传</option>
+                    </select>
+                </div>
+                <div class="form-group" id="image-url-group">
+                    <label>图片地址:</label>
+                    <input type="text" id="image-url" placeholder="https://">
+                </div>
+                <div class="form-group" id="image-upload-group" style="display:none;">
+                    <label>选择图片:</label>
+                    <input type="file" id="image-file" accept="image/*">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="insert-image">插入</button>
+                <button class="btn btn-secondary" onclick="closeModal('image-modal')">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 插入公式弹窗 -->
+    <div class="modal" id="formula-modal">
+        <div class="modal-content">
+            <div class="modal-title">插入公式</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>公式类型:</label>
+                    <select id="formula-type">
+                        <option value="inline">行内公式</option>
+                        <option value="block">独立公式(居中)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>LaTeX公式:</label>
+                    <textarea id="formula-input" rows="4" placeholder="例如: E = mc^2"></textarea>
+                </div>
+                <div class="formula-preview">
+                    <label>预览:</label>
+                    <div id="formula-preview-content"></div>
+                </div>
+                <div class="formula-help">
+                    <a href="https://katex.org/docs/supported.html" target="_blank">查看LaTeX语法帮助</a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="insert-formula">插入</button>
+                <button class="btn btn-secondary" onclick="closeModal('formula-modal')">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 查找替换弹窗 -->
+    <div class="modal" id="find-modal">
+        <div class="modal-content">
+            <div class="modal-title">查找和替换</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>查找内容:</label>
+                    <input type="text" id="find-text" placeholder="输入要查找的内容">
+                </div>
+                <div class="form-group">
+                    <label>替换为:</label>
+                    <input type="text" id="replace-text" placeholder="输入替换内容">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="match-case">
+                        区分大小写
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="btn-find-next">查找下一个</button>
+                <button class="btn btn-primary" id="btn-replace">替换</button>
+                <button class="btn btn-primary" id="btn-replace-all">全部替换</button>
+                <button class="btn btn-secondary" onclick="closeModal('find-modal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+class WordMDEditor {
+    constructor() {
+        this.editor = document.getElementById('editor');
+        this.markdownSource = document.getElementById('markdown-source');
+        this.currentFileName = null;
+        this.currentFormat = {
+            bold: false,
+            italic: false,
+            underline: false,
+            strike: false,
+            subscript: false,
+            superscript: false,
+            fontSize: '14',
+            fontFamily: 'Calibri',
+            style: 'p'
+        };
+        
+        this.init();
+    }
+    
+    init() {
+        this.history = {
+            undoStack: [],
+            redoStack: [],
+            maxSize: 50
+        };
+        this.findState = {
+            currentIndex: -1,
+            matches: []
+        };
+        this.formatPainterState = {
+            active: false,
+            locked: false,
+            formats: null
+        };
+        
+        this.initialContent = this.editor.innerHTML;
+        this.initialMarkdown = this.markdownSource.value;
+        
+        this.bindEvents();
+        this.updateWordCount();
+        this.updateCursorPosition();
+        this.updateCurrentFormat();
+        this.generateTablePreview();
+        this.saveToHistory();
+        this.setupAutoSave();
+    }
+    
+    bindEvents() {
+        console.log('=== 开始绑定事件 ===');
+
+        try {
+            const tabs = document.querySelectorAll('.ribbon-tab');
+            console.log(`找到 ${tabs.length} 个选项卡`);
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    console.log(`点击选项卡: ${e.target.dataset.tab}`);
+                    this.switchTab(e.target.dataset.tab);
+                });
+            });
+
+const fontButtons = ['bold', 'italic', 'underline', 'strike', 'subscript', 'superscript'];
+            console.log('绑定字体格式按钮...');
+            fontButtons.forEach(format => {
+                const btn = document.getElementById(`btn-${format}`);
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        this.toggleFormat(format);
+                    });
+                }
+            });
+
+            const formatPainterBtn = document.getElementById('btn-format-painter');
+            if (formatPainterBtn) {
+                formatPainterBtn.addEventListener('click', (e) => {
+                    this.handleFormatPainter(e);
+                });
+            }
+            
+            const fileButtons = ['new', 'open', 'save', 'save-as', 'export-html', 'export-markdown'];
+            fileButtons.forEach(format => {
+                const btn = document.getElementById(`btn-${format}`);
+                if (btn) {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.handleFileButton(format);
+                    });
+                }
+            });
+
+            const fontFamilySelect = document.getElementById('font-family');
+            if (fontFamilySelect) {
+                fontFamilySelect.addEventListener('change', (e) => {
+                    this.setFontFamily(e.target.value);
+                });
+            }
+
+            const fontSizeSelect = document.getElementById('font-size');
+            if (fontSizeSelect) {
+                fontSizeSelect.addEventListener('change', (e) => {
+                    this.setFontSize(e.target.value);
+                });
+            }
+
+            const lineHeightSelect = document.getElementById('line-height');
+            if (lineHeightSelect) {
+                lineHeightSelect.addEventListener('change', (e) => {
+                    this.setLineHeight(e.target.value);
+                });
+            }
+
+            const letterSpacingSelect = document.getElementById('letter-spacing');
+            if (letterSpacingSelect) {
+                letterSpacingSelect.addEventListener('change', (e) => {
+                    this.setLetterSpacing(e.target.value);
+                });
+            }
+
+            const styleSelect = document.getElementById('style-select');
+            if (styleSelect) {
+                styleSelect.addEventListener('change', (e) => {
+                    this.setStyle(e.target.value);
+                });
+            }
+
+            const alignButtons = ['left', 'center', 'right', 'justify'];
+            alignButtons.forEach(align => {
+                const btn = document.getElementById(`btn-align-${align}`);
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        this.setAlignment(align);
+                    });
+                }
+            });
+
+            const paragraphButtons = ['bullet', 'numbering', 'task', 'quote', 'outdent', 'indent', 'hr'];
+            paragraphButtons.forEach(format => {
+                const btn = document.getElementById(`btn-${format}`);
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        this.handleParagraphButton(format);
+                    });
+                }
+            });
+
+            const textColorInput = document.getElementById('text-color');
+            if (textColorInput) {
+                textColorInput.addEventListener('change', (e) => {
+                    this.setTextColor(e.target.value);
+                });
+            }
+
+            const bgColorInput = document.getElementById('bg-color');
+            if (bgColorInput) {
+                bgColorInput.addEventListener('change', (e) => {
+                    this.setBackgroundColor(e.target.value);
+                });
+            }
+
+            const tableBtn = document.getElementById('btn-table');
+            if (tableBtn) {
+                tableBtn.addEventListener('click', () => {
+                    this.showTableModal();
+                });
+            }
+
+            const linkBtn = document.getElementById('btn-link');
+            if (linkBtn) {
+                linkBtn.addEventListener('click', () => {
+                    this.showLinkModal();
+                });
+            }
+
+            const imageBtn = document.getElementById('btn-image');
+            if (imageBtn) {
+                imageBtn.addEventListener('click', () => {
+                    this.showImageModal();
+                });
+            }
+
+            const formulaInlineBtn = document.getElementById('btn-formula-inline');
+            if (formulaInlineBtn) {
+                formulaInlineBtn.addEventListener('click', () => {
+                    this.showFormulaModal('inline');
+                });
+            }
+
+            const formulaBlockBtn = document.getElementById('btn-formula-block');
+            if (formulaBlockBtn) {
+                formulaBlockBtn.addEventListener('click', () => {
+                    this.showFormulaModal('block');
+                });
+            }
+
+            const rulerToggle = document.getElementById('toggle-ruler');
+            if (rulerToggle) {
+                rulerToggle.addEventListener('change', (e) => {
+                    this.toggleRuler(e.target.checked);
+                });
+            }
+
+            const panelToggle = document.getElementById('toggle-panel');
+            if (panelToggle) {
+                panelToggle.addEventListener('change', (e) => {
+                    this.toggleStylePanel(e.target.checked);
+                });
+            }
+
+            const outlineToggle = document.getElementById('toggle-outline');
+            if (outlineToggle) {
+                outlineToggle.addEventListener('change', (e) => {
+                    this.toggleOutlinePanel(e.target.checked);
+                });
+            }
+
+            const statsToggle = document.getElementById('toggle-stats');
+            if (statsToggle) {
+                statsToggle.addEventListener('change', (e) => {
+                    this.toggleStatsPanel(e.target.checked);
+                });
+            }
+
+            const fullscreenBtn = document.getElementById('btn-fullscreen');
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                    this.toggleFullscreen();
+                });
+            }
+
+            const markdownToggle = document.getElementById('toggle-markdown');
+            if (markdownToggle) {
+                markdownToggle.addEventListener('change', (e) => {
+                    this.toggleMarkdownView(e.target.checked);
+                });
+            }
+
+            const themeLightBtn = document.getElementById('btn-theme-light');
+            if (themeLightBtn) {
+                themeLightBtn.addEventListener('click', () => {
+                    this.setTheme('light');
+                });
+            }
+
+            const themeDarkBtn = document.getElementById('btn-theme-dark');
+            if (themeDarkBtn) {
+                themeDarkBtn.addEventListener('click', () => {
+                    this.setTheme('dark');
+                });
+            }
+
+            const undoBtn = document.getElementById('btn-undo');
+            if (undoBtn) {
+                undoBtn.addEventListener('click', () => {
+                    this.undo();
+                });
+            }
+
+            const redoBtn = document.getElementById('btn-redo');
+            if (redoBtn) {
+                redoBtn.addEventListener('click', () => {
+                    this.redo();
+                });
+            }
+
+            const findBtn = document.getElementById('btn-find');
+            if (findBtn) {
+                findBtn.addEventListener('click', () => {
+                    this.showFindModal();
+                });
+            }
+
+            const printBtn = document.getElementById('btn-print');
+            if (printBtn) {
+                printBtn.addEventListener('click', () => {
+                    this.printDocument();
+                });
+            }
+
+            const clearFormatBtn = document.getElementById('clear-format');
+            if (clearFormatBtn) {
+                clearFormatBtn.addEventListener('click', () => {
+                    this.clearFormat();
+                });
+            }
+
+            if (this.editor) {
+                this.editor.addEventListener('input', () => {
+                    this.updateWordCount();
+                    this.updateMarkdownSource();
+                });
+
+                this.editor.addEventListener('keyup', () => {
+                    this.updateCursorPosition();
+                    this.updateCurrentFormat();
+                });
+
+                this.editor.addEventListener('mouseup', () => {
+                    this.updateCurrentFormat();
+                });
+
+                this.editor.addEventListener('keydown', (e) => {
+                    this.handleShortcuts(e);
+                });
+
+                this.editor.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const clipboardData = e.clipboardData || window.clipboardData;
+                    let pastedData = clipboardData.getData('text/html') || clipboardData.getData('text/plain');
+                    
+                    if (this.isHtmlContent(pastedData)) {
+                        const markdown = this.htmlToMarkdown(pastedData);
+                        const html = this.markdownToHtml(markdown);
+                        document.execCommand('insertHTML', false, html);
+                    } else {
+                        const text = clipboardData.getData('text/plain');
+                        document.execCommand('insertText', false, text);
+                    }
+                    
+                    this.updateWordCount();
+                    this.updateMarkdownSource();
+                });
+            }
+
+            if (this.markdownSource) {
+                this.markdownSource.addEventListener('input', () => {
+                    this.updateEditorFromMarkdown();
+                });
+            }
+
+            const tableRows = document.getElementById('table-rows');
+            if (tableRows) {
+                tableRows.addEventListener('input', () => {
+                    this.generateTablePreview();
+                });
+            }
+
+            const tableCols = document.getElementById('table-cols');
+            if (tableCols) {
+                tableCols.addEventListener('input', () => {
+                    this.generateTablePreview();
+                });
+            }
+
+            const insertTableBtn = document.getElementById('insert-table');
+            if (insertTableBtn) {
+                insertTableBtn.addEventListener('click', () => {
+                    this.insertTable();
+                });
+            }
+
+            const insertLinkBtn = document.getElementById('insert-link');
+            if (insertLinkBtn) {
+                insertLinkBtn.addEventListener('click', () => {
+                    this.insertLink();
+                });
+            }
+
+            const imageSource = document.getElementById('image-source');
+            if (imageSource) {
+                imageSource.addEventListener('change', (e) => {
+                    this.toggleImageSource(e.target.value);
+                });
+            }
+
+            const insertImageBtn = document.getElementById('insert-image');
+            if (insertImageBtn) {
+                insertImageBtn.addEventListener('click', () => {
+                    this.insertImage();
+                });
+            }
+
+            const insertFormulaBtn = document.getElementById('insert-formula');
+            if (insertFormulaBtn) {
+                insertFormulaBtn.addEventListener('click', () => {
+                    this.insertFormula();
+                });
+            }
+
+            const formulaInput = document.getElementById('formula-input');
+            if (formulaInput) {
+                formulaInput.addEventListener('input', (e) => {
+                    this.previewFormula(e.target.value);
+                });
+            }
+
+            const findNextBtn = document.getElementById('btn-find-next');
+            if (findNextBtn) {
+                findNextBtn.addEventListener('click', () => {
+                    this.findNext();
+                });
+            }
+
+            const replaceBtn = document.getElementById('btn-replace');
+            if (replaceBtn) {
+                replaceBtn.addEventListener('click', () => {
+                    this.replace();
+                });
+            }
+
+            const replaceAllBtn = document.getElementById('btn-replace-all');
+            if (replaceAllBtn) {
+                replaceAllBtn.addEventListener('click', () => {
+                    this.replaceAll();
+                });
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey) {
+                    this.handleGlobalShortcuts(e);
+                }
+            });
+
+            this.editor.addEventListener('input', () => {
+                this.saveToHistory();
+            });
+
+        } catch (error) {
+            console.error('绑定事件时出错:', error);
+        }
+
+        console.log('=== 事件绑定完成 ===');
+    }
+
+    handleFileButton(action) {
+        switch(action) {
+            case 'new':
+                this.newFile();
+                break;
+            case 'open':
+                this.openFile();
+                break;
+            case 'save':
+                this.saveFile();
+                break;
+            case 'save-as':
+                this.saveAsFile();
+                break;
+            case 'export-html':
+                this.exportHTML();
+                break;
+            case 'export-markdown':
+                this.exportMarkdown();
+                break;
+        }
+    }
+
+    handleParagraphButton(action) {
+        switch(action) {
+            case 'bullet':
+                this.insertBulletList();
+                break;
+            case 'numbering':
+                this.insertNumberedList();
+                break;
+            case 'task':
+                this.insertTaskList();
+                break;
+            case 'quote':
+                this.insertQuote();
+                break;
+            case 'outdent':
+                this.outdent();
+                break;
+            case 'indent':
+                this.indent();
+                break;
+            case 'hr':
+                this.insertHorizontalRule();
+                break;
+        }
+    }
+    
+    switchTab(tabName) {
+        document.querySelectorAll('.ribbon-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelector(`.ribbon-tab[data-tab="${tabName}"]`).classList.add('active');
+        
+        document.querySelectorAll('.ribbon-panel').forEach(panel => {
+            panel.classList.remove('active');
+        });
+        document.getElementById(`panel-${tabName}`).classList.add('active');
+    }
+    
+    toggleFormat(format) {
+        const btn = document.getElementById(`btn-${format}`);
+        btn.classList.toggle('active');
+        this.currentFormat[format] = !this.currentFormat[format];
+        
+        document.execCommand(format === 'strike' ? 'strikeThrough' : format);
+        this.updateCurrentFormat();
+    }
+    
+    handleFormatPainter(e) {
+        const btn = document.getElementById('btn-format-painter');
+        
+        if (!this.formatPainterState.active) {
+            this.formatPainterState.active = true;
+            this.formatPainterState.locked = false;
+            btn.classList.add('format-painter-active');
+            
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0 && selection.toString().length > 0) {
+                this.formatPainterState.formats = this.getComputedStyles(selection.anchorNode);
+            }
+        } else {
+            if (this.formatPainterState.locked) {
+                this.formatPainterState.active = false;
+                this.formatPainterState.locked = false;
+                this.formatPainterState.formats = null;
+                btn.classList.remove('format-painter-active');
+            } else if (this.formatPainterState.formats) {
+                this.applyFormatPainter();
+            }
+        }
+        
+        this.editor.addEventListener('mouseup', this.handleFormatPainterMouseUp = (e) => {
+            if (this.formatPainterState.active && !this.formatPainterState.locked) {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0 && selection.toString().length > 0) {
+                    this.formatPainterState.formats = this.getComputedStyles(selection.anchorNode);
+                }
+            }
+        }, { once: true });
+    }
+    
+    handleFormatPainterMouseUp(e) {
+        if (this.formatPainterState.active && this.formatPainterState.formats) {
+            setTimeout(() => {
+                this.applyFormatPainter();
+            }, 10);
+        }
+    }
+    
+    getComputedStyles(node) {
+        const element = node.nodeType === 3 ? node.parentElement : node;
+        if (!element) return null;
+        
+        const computed = window.getComputedStyle(element);
+        return {
+            fontFamily: computed.fontFamily,
+            fontSize: computed.fontSize,
+            fontWeight: computed.fontWeight,
+            fontStyle: computed.fontStyle,
+            textDecoration: computed.textDecoration,
+            color: computed.color,
+            backgroundColor: computed.backgroundColor,
+            textAlign: computed.textAlign,
+            lineHeight: computed.lineHeight,
+            letterSpacing: computed.letterSpacing
+        };
+    }
+    
+    applyFormatPainter() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount || selection.toString().length === 0) return;
+        
+        const range = selection.getRangeAt(0);
+        const selectedText = range.toString();
+        
+        const span = document.createElement('span');
+        const formats = this.formatPainterState.formats;
+        
+        if (formats.fontFamily) span.style.fontFamily = formats.fontFamily;
+        if (formats.fontSize) span.style.fontSize = formats.fontSize;
+        if (formats.fontWeight === 'bold' || parseInt(formats.fontWeight) >= 700) span.style.fontWeight = 'bold';
+        if (formats.fontStyle === 'italic') span.style.fontStyle = 'italic';
+        if (formats.textDecoration.includes('underline')) span.style.textDecoration = 'underline';
+        if (formats.textDecoration.includes('line-through')) span.style.textDecoration = 'line-through';
+        if (formats.color && formats.color !== 'rgb(0, 0, 0)') span.style.color = formats.color;
+        if (formats.backgroundColor && formats.backgroundColor !== 'rgba(0, 0, 0, 0)' && formats.backgroundColor !== 'rgb(255, 255, 255)') span.style.backgroundColor = formats.backgroundColor;
+        
+        try {
+            range.surroundContents(span);
+        } catch (e) {
+            range.commonAncestorContainer.innerHTML = range.commonAncestorContainer.innerHTML.replace(selectedText, span.outerHTML);
+        }
+        
+        if (!this.formatPainterState.locked) {
+            this.formatPainterState.active = false;
+            this.formatPainterState.formats = null;
+            document.getElementById('btn-format-painter').classList.remove('format-painter-active');
+        }
+        
+        this.updateCurrentFormat();
+    }
+    
+    setFontFamily(font) {
+        this.currentFormat.fontFamily = font;
+        document.execCommand('fontName', false, font);
+        this.updateCurrentFormat();
+    }
+    
+    setFontSize(size) {
+        this.currentFormat.fontSize = size;
+        document.execCommand('fontSize', false, size);
+        this.updateCurrentFormat();
+    }
+    
+    setLineHeight(height) {
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('lineHeight', false, height);
+        document.execCommand('styleWithCSS', false, false);
+        this.updateCurrentFormat();
+    }
+    
+    setLetterSpacing(spacing) {
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('letterSpacing', false, spacing);
+        document.execCommand('styleWithCSS', false, false);
+        this.updateCurrentFormat();
+    }
+    
+    setStyle(style) {
+        this.currentFormat.style = style;
+        
+        if (style.startsWith('h')) {
+            const level = parseInt(style.substring(1));
+            document.execCommand('formatBlock', false, `<h${level}>`);
+        } else if (style === 'code') {
+            document.execCommand('formatBlock', false, '<pre>');
+        } else if (style === 'blockquote') {
+            document.execCommand('formatBlock', false, '<blockquote>');
+        } else {
+            document.execCommand('formatBlock', false, '<p>');
+        }
+        
+        this.updateCurrentFormat();
+    }
+    
+    setAlignment(align) {
+        document.execCommand('justify' + align.charAt(0).toUpperCase() + align.slice(1));
+        this.updateCurrentFormat();
+    }
+    
+    insertBulletList() {
+        document.execCommand('insertUnorderedList');
+    }
+    
+    insertNumberedList() {
+        document.execCommand('insertOrderedList');
+    }
+    
+    insertTaskList() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.innerHTML = '<span contenteditable="true">任务项</span>';
+        
+        li.addEventListener('click', (e) => {
+            if (e.target === li || e.target === li.firstChild) {
+                li.classList.toggle('checked');
+            }
+        });
+        
+        range.deleteContents();
+        range.insertNode(li);
+        range.setStartAfter(li);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+    
+    insertQuote() {
+        document.execCommand('formatBlock', false, '<blockquote>');
+    }
+    
+    outdent() {
+        document.execCommand('outdent');
+    }
+    
+    indent() {
+        document.execCommand('indent');
+    }
+    
+    insertHorizontalRule() {
+        document.execCommand('insertHorizontalRule');
+    }
+    
+    setTextColor(color) {
+        document.execCommand('foreColor', false, color);
+        this.updateCurrentFormat();
+    }
+    
+    setBackgroundColor(color) {
+        document.execCommand('backColor', false, color);
+        this.updateCurrentFormat();
+    }
+    
+    showTableModal() {
+        document.getElementById('table-modal').classList.add('show');
+    }
+    
+    showLinkModal() {
+        document.getElementById('link-modal').classList.add('show');
+    }
+    
+    showImageModal() {
+        document.getElementById('image-modal').classList.add('show');
+    }
+    
+    showFormulaModal(type) {
+        const formulaType = document.getElementById('formula-type');
+        if (formulaType) {
+            formulaType.value = type;
+        }
+        const formulaInput = document.getElementById('formula-input');
+        if (formulaInput) {
+            formulaInput.value = '';
+        }
+        const preview = document.getElementById('formula-preview-content');
+        if (preview) {
+            preview.innerHTML = '';
+        }
+        document.getElementById('formula-modal').classList.add('show');
+    }
+    
+    previewFormula(latex) {
+        const preview = document.getElementById('formula-preview-content');
+        if (!preview || !latex.trim()) {
+            if (preview) preview.innerHTML = '';
+            return;
+        }
+        try {
+            if (typeof katex !== 'undefined') {
+                katex.render(latex, preview, {
+                    throwOnError: false,
+                    displayMode: false
+                });
+            } else {
+                preview.textContent = latex;
+            }
+        } catch (e) {
+            preview.textContent = latex;
+        }
+    }
+    
+    insertFormula() {
+        const formulaType = document.getElementById('formula-type').value;
+        const formulaInput = document.getElementById('formula-input').value.trim();
+        
+        if (!formulaInput) {
+            alert('请输入公式');
+            return;
+        }
+        
+        this.editor.focus();
+        
+        const type = formulaType;
+        const latex = formulaInput;
+        
+try {
+                const span = document.createElement('span');
+                span.className = type === 'block' ? 'formula-block' : 'formula-inline';
+                span.setAttribute('data-latex', latex);
+                
+                if (typeof katex !== 'undefined') {
+                    const displayMode = type === 'block';
+                    const html = katex.renderToString(latex, {
+                        throwOnError: false,
+                        displayMode: displayMode
+                    });
+                    span.innerHTML = html;
+                } else {
+                    span.textContent = latex;
+                }
+            
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(span);
+                
+                const space = document.createTextNode(' ');
+                span.parentNode.insertBefore(space, span.nextSibling);
+            } else {
+                this.editor.appendChild(span);
+            }
+            
+            this.closeModal('formula-modal');
+            this.updateWordCount();
+        } catch (e) {
+            console.error('插入公式失败:', e);
+            alert('插入公式失败: ' + e.message);
+        }
+    }
+    
+    toggleRuler(show) {
+        const ruler = document.getElementById('ruler');
+        if (show) {
+            ruler.classList.remove('hidden');
+        } else {
+            ruler.classList.add('hidden');
+        }
+    }
+    
+    toggleStylePanel(show) {
+        const panel = document.getElementById('style-panel');
+        if (show) {
+            panel.classList.remove('hidden');
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+    
+    toggleOutlinePanel(show) {
+        const panel = document.getElementById('outline-panel');
+        if (show) {
+            panel.classList.remove('hidden');
+            this.updateOutline();
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+    
+    toggleStatsPanel(show) {
+        const panel = document.getElementById('stats-panel');
+        if (show) {
+            panel.classList.remove('hidden');
+            this.updateStats();
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+    
+    updateStats() {
+        const text = this.editor.innerText;
+        const words = text.split(/\s+/).filter(word => word.length > 0);
+        const chars = text.length;
+        const paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 0).length || (text.trim() ? 1 : 0);
+        const lines = text.split(/\n/).length;
+        
+        const headings = this.editor.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        
+        document.getElementById('stat-words').textContent = words.length;
+        document.getElementById('stat-chars').textContent = chars;
+        document.getElementById('stat-paragraphs').textContent = paragraphs;
+        document.getElementById('stat-lines').textContent = lines;
+        document.getElementById('stat-headings').textContent = headings.length;
+    }
+    
+    toggleFullscreen() {
+        const elem = document.documentElement;
+        if (!document.fullscreenElement) {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+    }
+    
+    updateOutline() {
+        const outlineList = document.getElementById('outline-list');
+        const outlineCount = document.getElementById('outline-count');
+        
+        if (!outlineList) return;
+        
+        const headings = this.editor.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        const headingArray = [];
+        
+        headings.forEach((heading, index) => {
+            const text = heading.textContent.trim();
+            if (text) {
+                const level = parseInt(heading.tagName.substring(1));
+                headingArray.push({
+                    element: heading,
+                    text: text,
+                    level: level,
+                    id: 'outline-' + index
+                });
+                heading.id = 'outline-' + index;
+            }
+        });
+        
+        outlineCount.textContent = headingArray.length + ' 个标题';
+        
+        if (headingArray.length === 0) {
+            outlineList.innerHTML = '<div class="outline-empty">暂无标题</div>';
+            return;
+        }
+        
+        outlineList.innerHTML = '';
+        
+        headingArray.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'outline-item level-' + item.level;
+            div.textContent = item.text;
+            div.dataset.id = item.id;
+            div.title = item.text;
+            
+            div.addEventListener('click', () => {
+                const element = document.getElementById(item.id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    this.editor.focus();
+                    
+                    document.querySelectorAll('.outline-item').forEach(el => {
+                        el.classList.remove('active');
+                    });
+                    div.classList.add('active');
+                }
+            });
+            
+            outlineList.appendChild(div);
+        });
+    }
+    
+    toggleMarkdownView(show) {
+        const editor = this.editor;
+        const source = this.markdownSource;
+        const viewMode = document.getElementById('view-mode');
+        
+        if (show) {
+            editor.classList.add('show');
+            source.classList.remove('show');
+            viewMode.textContent = '视图: Markdown源码';
+        } else {
+            editor.classList.remove('show');
+            source.classList.add('show');
+            viewMode.textContent = '视图: 所见即所得';
+        }
+    }
+    
+    setTheme(theme) {
+        const body = document.body;
+        const appContainer = document.querySelector('.app-container');
+        
+        if (theme === 'dark') {
+            body.classList.add('dark-theme');
+            appContainer.classList.add('dark-theme');
+            document.getElementById('btn-theme-dark').classList.add('active');
+            document.getElementById('btn-theme-light').classList.remove('active');
+        } else {
+            body.classList.remove('dark-theme');
+            appContainer.classList.remove('dark-theme');
+            document.getElementById('btn-theme-light').classList.add('active');
+            document.getElementById('btn-theme-dark').classList.remove('active');
+        }
+    }
+    
+    clearFormat() {
+        document.execCommand('removeFormat');
+        this.updateCurrentFormat();
+    }
+    
+    updateWordCount() {
+        const text = this.editor.innerText.trim();
+        const words = text.split(/\s+/).filter(word => word.length > 0);
+        document.getElementById('word-count').textContent = `字数: ${words.length}`;
+
+        if (this.currentFileName) {
+            const fileStatusElement = document.getElementById('file-status-icon');
+            fileStatusElement.textContent = '●';
+            fileStatusElement.style.color = '#28a745';
+        }
+        
+        this.updateOutline();
+        this.updateStats();
+        this.renderFormulas();
+    }
+    
+    renderFormulas() {
+        if (typeof katex === 'undefined') return;
+        
+        const formulas = this.editor.querySelectorAll('.formula-inline, .formula-block');
+        formulas.forEach(el => {
+            const latex = el.getAttribute('data-latex') || el.textContent;
+            if (latex) {
+                try {
+                    const displayMode = el.classList.contains('formula-block');
+                    el.setAttribute('data-latex', latex);
+                    el.innerHTML = katex.renderToString(latex, {
+                        throwOnError: false,
+                        displayMode: displayMode
+                    });
+                } catch (e) {
+                    console.error('渲染公式失败:', e);
+                }
+            }
+        });
+    }
+    
+    updateCursorPosition() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(this.editor);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        
+        const text = preCaretRange.toString();
+        const lines = text.split('\n');
+        const line = lines.length;
+        const column = lines[lines.length - 1].length + 1;
+        
+        document.getElementById('cursor-position').textContent = `行 ${line}, 列 ${column}`;
+    }
+    
+    updateCurrentFormat() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        
+        const computedStyle = window.getComputedStyle(container.parentElement);
+        const fontSize = computedStyle.fontSize;
+        const fontFamily = computedStyle.fontFamily.split(',')[0].replace(/['"]/g, '');
+        
+        document.getElementById('current-font').textContent = fontFamily;
+        document.getElementById('current-size').textContent = fontSize;
+        
+        const tagName = container.parentElement.tagName.toLowerCase();
+        let styleName = '正文';
+        
+        if (tagName.startsWith('h')) {
+            styleName = `标题 ${tagName.substring(1)}`;
+        } else if (tagName === 'pre' || tagName === 'code') {
+            styleName = '代码';
+        } else if (tagName === 'blockquote') {
+            styleName = '引用';
+        }
+        
+        document.getElementById('current-style').textContent = styleName;
+        
+        const formatButtons = ['bold', 'italic', 'underline', 'strike'];
+        formatButtons.forEach(format => {
+            const btn = document.getElementById(`btn-${format}`);
+            const isActive = document.queryCommandState(format === 'strike' ? 'strikeThrough' : format);
+            btn.classList.toggle('active', isActive);
+            this.currentFormat[format] = isActive;
+        });
+        
+        const alignment = computedStyle.textAlign;
+        const alignButtons = ['left', 'center', 'right', 'justify'];
+        alignButtons.forEach(align => {
+            const btn = document.getElementById(`btn-align-${align}`);
+            btn.classList.toggle('active', alignment === align);
+        });
+        
+        this.updateFileName();
+    }
+    
+    handleShortcuts(e) {
+        if (e.ctrlKey) {
+            switch(e.key.toLowerCase()) {
+                case 'b':
+                    e.preventDefault();
+                    this.toggleFormat('bold');
+                    break;
+                case 'i':
+                    e.preventDefault();
+                    this.toggleFormat('italic');
+                    break;
+                case 'u':
+                    e.preventDefault();
+                    this.toggleFormat('underline');
+                    break;
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                    e.preventDefault();
+                    this.setStyle(`h${e.key}`);
+                    break;
+            }
+        }
+    }
+    
+    handleGlobalShortcuts(e) {
+        switch(e.key.toLowerCase()) {
+            case 's':
+                e.preventDefault();
+                this.saveContent();
+                break;
+            case 'n':
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    this.newFile();
+                }
+                break;
+            case 'o':
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    this.openFile();
+                }
+                break;
+            case 'z':
+                if (e.ctrlKey && !e.shiftKey) {
+                    e.preventDefault();
+                    this.undo();
+                } else if (e.ctrlKey && e.shiftKey) {
+                    e.preventDefault();
+                    this.redo();
+                }
+                break;
+            case 'y':
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    this.redo();
+                }
+                break;
+            case 'f':
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    this.showFindModal();
+                }
+                break;
+            case 'p':
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    this.printDocument();
+                }
+                break;
+        }
+    }
+    
+    generateTablePreview() {
+        const rows = parseInt(document.getElementById('table-rows').value) || 3;
+        const cols = parseInt(document.getElementById('table-cols').value) || 3;
+        const preview = document.getElementById('table-preview');
+        
+        preview.innerHTML = '';
+        preview.style.gridTemplateColumns = `repeat(${cols}, 20px)`;
+        
+        for (let i = 0; i < rows * cols; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            preview.appendChild(cell);
+        }
+    }
+    
+    insertTable() {
+        const rows = parseInt(document.getElementById('table-rows').value) || 3;
+        const cols = parseInt(document.getElementById('table-cols').value) || 3;
+        
+        let tableHTML = '<table>';
+        for (let i = 0; i < rows; i++) {
+            tableHTML += '<tr>';
+            for (let j = 0; j < cols; j++) {
+                tableHTML += '<td>&nbsp;</td>';
+            }
+            tableHTML += '</tr>';
+        }
+        tableHTML += '</table>';
+        
+        document.execCommand('insertHTML', false, tableHTML);
+        this.closeModal('table-modal');
+    }
+    
+    insertLink() {
+        const url = document.getElementById('link-url').value.trim();
+        const text = document.getElementById('link-text').value.trim() || url;
+        
+        if (url) {
+            const linkHTML = `<a href="${url}" target="_blank">${text}</a>`;
+            document.execCommand('insertHTML', false, linkHTML);
+            this.closeModal('link-modal');
+        }
+    }
+    
+    toggleImageSource(source) {
+        const urlGroup = document.getElementById('image-url-group');
+        const uploadGroup = document.getElementById('image-upload-group');
+        
+        if (source === 'url') {
+            urlGroup.style.display = 'block';
+            uploadGroup.style.display = 'none';
+        } else {
+            urlGroup.style.display = 'none';
+            uploadGroup.style.display = 'block';
+        }
+    }
+    
+    insertImage() {
+        const source = document.getElementById('image-source').value;
+        
+        if (source === 'url') {
+            const url = document.getElementById('image-url').value.trim();
+            if (url) {
+                const imgHTML = `<img src="${url}" alt="图片">`;
+                document.execCommand('insertHTML', false, imgHTML);
+                this.closeModal('image-modal');
+            }
+        } else {
+            const fileInput = document.getElementById('image-file');
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    const imgHTML = `<img src="${e.target.result}" alt="${file.name}">`;
+                    document.execCommand('insertHTML', false, imgHTML);
+                    this.closeModal('image-modal');
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+    
+    updateMarkdownSource() {
+        const html = this.editor.innerHTML;
+        const markdown = this.htmlToMarkdown(html);
+        this.markdownSource.value = markdown;
+    }
+    
+    updateEditorFromMarkdown() {
+        try {
+            const markdown = this.markdownSource.value;
+
+            if (!markdown || markdown.trim() === '') {
+                this.editor.innerHTML = '';
+                this.updateWordCount();
+                return;
+            }
+
+            const html = this.markdownToHtml(markdown);
+
+            if (!html || html.trim() === '') {
+                this.editor.innerHTML = '';
+            } else {
+                this.editor.innerHTML = html;
+            }
+
+            this.updateWordCount();
+        } catch (error) {
+            console.error('更新编辑器内容时出错:', error);
+            alert('更新编辑器内容时出错: ' + error.message);
+        }
+    }
+    
+    isHtmlContent(text) {
+        const htmlPattern = /<(html|head|body|div|p|h[1-6]|table|tr|td|th|span|strong|em|b|i|u|s|blockquote|ul|ol|li|a|img|br|hr|pre|code)[^>]*>/i;
+        return htmlPattern.test(text);
+    }
+
+    htmlToMarkdown(html) {
+        let markdown = html;
+
+        if (!this.isHtmlContent(markdown)) {
+            return markdown;
+        }
+
+        markdown = markdown.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n');
+        markdown = markdown.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n');
+        markdown = markdown.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n');
+        markdown = markdown.replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n');
+        markdown = markdown.replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n');
+        markdown = markdown.replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n');
+
+        markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n');
+        markdown = markdown.replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**');
+        markdown = markdown.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**');
+        markdown = markdown.replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*');
+        markdown = markdown.replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*');
+        markdown = markdown.replace(/<s[^>]*>(.*?)<\/s>/gi, '~~$1~~');
+        markdown = markdown.replace(/<strike[^>]*>(.*?)<\/strike>/gi, '~~$1~~');
+        markdown = markdown.replace(/<u[^>]*>(.*?)<\/u>/gi, '*$1*');
+        markdown = markdown.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gi, '> $1\n\n');
+
+        markdown = markdown.replace(/<li class="task-item checked"[^>]*>(.*?)<\/li>/gi, '- [x] $1\n');
+        markdown = markdown.replace(/<li class="task-item"[^>]*>(.*?)<\/li>/gi, '- [ ] $1\n');
+
+        markdown = markdown.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+        markdown = markdown.replace(/<ul[^>]*>/gi, '');
+        markdown = markdown.replace(/<\/ul>/gi, '\n');
+        markdown = markdown.replace(/<ol[^>]*>/gi, '');
+        markdown = markdown.replace(/<\/ol>/gi, '\n');
+
+        markdown = markdown.replace(/<hr[^>]*>/gi, '---\n\n');
+        markdown = markdown.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
+        markdown = markdown.replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>/gi, '![$2]($1)');
+        markdown = markdown.replace(/<pre[^>]*>(.*?)<\/pre>/gi, '```\n$1\n```\n');
+        markdown = markdown.replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`');
+
+        markdown = markdown.replace(/<[^>]*>/g, '');
+        markdown = markdown.replace(/\n{3,}/g, '\n\n');
+
+        return markdown;
+    }
+    
+    markdownToHtml(markdown) {
+        try {
+            let html = markdown;
+
+            const codeBlocks = [];
+            html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
+                const index = codeBlocks.length;
+                codeBlocks.push('<pre><code>' + code + '</code></pre>');
+                return '\x00CODEBLOCK_' + index + '\x00';
+            });
+
+            html = this.parseTables(html);
+
+            html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+            html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
+            html = html.replace(/^##### (.*?)$/gm, '<h5>$1</h5>');
+            html = html.replace(/^###### (.*?)$/gm, '<h6>$1</h6>');
+
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+            html = html.replace(/~~(.*?)~~/g, '<s>$1</s>');
+
+            html = html.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
+
+            const treeLines = html.split('\n');
+            const processedTreeLines = treeLines.map(line => {
+                if (line.match(/^<(table|thead|tbody|tr|td|th|pre|code|span|blockquote|h[1-6]|p|ul|ol|li)/)) {
+                    return line;
+                }
+                if (line.includes('\x00CODEBLOCK_')) {
+                    return line;
+                }
+                if (line.match(/^[│├└─\s]/)) {
+                    return line.replace(/^([│├└─\s]+)(.*)$/, '<span class="tree-line">$1$2</span>');
+                }
+                return line;
+            });
+            html = processedTreeLines.join('\n');
+
+            html = html.replace(/^- \[x\] (.*?)$/gm, '<li class="task-item checked">$1</li>');
+            html = html.replace(/^- \[ \] (.*?)$/gm, '<li class="task-item">$1</li>');
+
+            const lines = html.split('\n');
+            const processedLines = [];
+            let inUl = false;
+            let inOl = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                if (line.includes('\x00CODEBLOCK_')) {
+                    if (inUl) {
+                        processedLines.push('</ul>');
+                        inUl = false;
+                    }
+                    if (inOl) {
+                        processedLines.push('</ol>');
+                        inOl = false;
+                    }
+                    processedLines.push(line);
+                    continue;
+                }
+                
+                if (/^- (.*?)$/.test(line.trim()) && !line.trim().startsWith('- [')) {
+                    if (!inUl) {
+                        processedLines.push('<ul>');
+                        inUl = true;
+                    }
+                    processedLines.push(line.replace(/^- (.*?)$/, '<li>$1</li>'));
+                } else if (/^\d+\. (.*?)$/.test(line.trim())) {
+                    if (!inOl) {
+                        processedLines.push('<ol>');
+                        inOl = true;
+                    }
+                    processedLines.push(line.replace(/^\d+\. (.*?)$/, '<li>$1</li>'));
+                } else {
+                    if (inUl) {
+                        processedLines.push('</ul>');
+                        inUl = false;
+                    }
+                    if (inOl) {
+                        processedLines.push('</ol>');
+                        inOl = false;
+                    }
+                    processedLines.push(line);
+                }
+            }
+
+            if (inUl) processedLines.push('</ul>');
+            if (inOl) processedLines.push('</ol>');
+
+            html = processedLines.join('\n');
+
+            html = html.replace(/^---$/gm, '<hr>');
+            html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+            html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" loading="lazy">');
+            html = html.replace(/`(?!\x00CODEBLOCK_)(.*?)`/g, '<code>$1</code>');
+            html = html.replace(/==([^=]+)==/g, '<mark>$1</mark>');
+
+            html = html.replace(/\x00CODEBLOCK_(\d+)\x00/g, (match, index) => {
+                return codeBlocks[parseInt(index)];
+            });
+
+            const paraLines = html.split('\n');
+            const processedParaLines = [];
+            let inCodeBlock = false;
+            
+            for (const line of paraLines) {
+                if (line.includes('<pre><code>') || line.includes('<code>')) {
+                    inCodeBlock = true;
+                }
+                if (line.includes('</code></pre>') || line.includes('</code>')) {
+                    inCodeBlock = false;
+                }
+                
+                if (inCodeBlock || line.match(/^<\/?[a-z][^>]*>/) || line.trim() === '') {
+                    processedParaLines.push(line);
+                } else {
+                    processedParaLines.push('<p>' + line + '</p>');
+                }
+            }
+            html = processedParaLines.join('\n');
+
+            return html;
+        } catch (error) {
+            console.error('Markdown转HTML时出错:', error);
+            return markdown;
+        }
+    }
+
+    parseTables(html) {
+        const lines = html.split('\n');
+        let processedLines = [];
+        let currentLineIndex = 0;
+
+        while (currentLineIndex < lines.length) {
+            const line = lines[currentLineIndex];
+            const trimmed = line.trim();
+
+            if (this.isUrlLine(trimmed)) {
+                processedLines.push(line);
+                currentLineIndex++;
+                continue;
+            }
+
+            if (line.includes('\x00CODEBLOCK_')) {
+                processedLines.push(line);
+                currentLineIndex++;
+                continue;
+            }
+
+            const isSeparator = trimmed.match(/^\|[-:\s|]*\|/) && trimmed.includes('-');
+            if (line.includes('|') && trimmed.length > 0 && !isSeparator) {
+                const tableLines = this.extractTableLines(lines, currentLineIndex);
+
+                if (tableLines) {
+                    const tableHtml = this.parseTableLines(tableLines);
+                    processedLines.push(tableHtml);
+                    currentLineIndex += tableLines.length;
+                    continue;
+                } else {
+                    processedLines.push(line);
+                }
+            } else {
+                processedLines.push(line);
+            }
+
+            currentLineIndex++;
+        }
+
+        return processedLines.join('\n');
+    }
+
+    isUrlLine(line) {
+        const urlPatterns = [
+            /^https?:\/\//i,
+            /^ws:\/\//i,
+            /^wss:\/\//i,
+            /^ftp:\/\//i,
+            /^mailto:/i,
+            /^tel:/i
+        ];
+
+        return urlPatterns.some(pattern => pattern.test(line));
+    }
+
+    extractTableLines(lines, startIndex) {
+        const extracted = [];
+
+        for (let i = startIndex; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+
+            if (line.includes('\x00CODEBLOCK_')) {
+                break;
+            }
+
+            if (trimmed.match(/^\|[-:\s|]*\|/) && trimmed.includes('-')) {
+                if (extracted.length >= 1) {
+                    extracted.push(line);
+                    continue;
+                } else {
+                    return null;
+                }
+            }
+            
+            if (extracted.length >= 2 && (!line.includes('|') || trimmed === '')) {
+                break;
+            }
+
+            const separatorCount = (trimmed.match(/\|/g) || []).length;
+            if (separatorCount < 2 && extracted.length >= 2) {
+                break;
+            }
+            if (separatorCount < 2 || trimmed === '') {
+                return null;
+            }
+
+            extracted.push(line);
+        }
+
+        if (extracted.length < 2) {
+            return null;
+        }
+
+        if (extracted.length >= 2) {
+            const separatorLine = extracted[1].trim();
+            const isSeparator = separatorLine.match(/^\|[-:\s|]*\|/) && separatorLine.includes('-');
+
+            if (!isSeparator) {
+                return null;
+            }
+        }
+
+        return extracted;
+    }
+    
+    parseTableLines(lines) {
+        if (lines.length < 2) {
+            return lines.join('\n');
+        }
+
+        const headerLine = lines[0];
+        const headerCells = headerLine.split('|')
+            .map(cell => cell.trim())
+            .filter(cell => cell !== '');
+
+        const dataLines = lines.slice(2).filter(line => {
+            const trimmed = line.trim();
+            return trimmed !== '' && !(trimmed.match(/^\|[-:\s|]*\|/) && trimmed.includes('-'));
+        });
+
+        const bodyCells = dataLines.map(line => {
+            return line.split('|')
+                .map(cell => cell.trim())
+                .filter(cell => cell !== '');
+        });
+
+        let html = '<table>';
+
+        if (headerCells.length > 0) {
+            html += '<thead><tr>';
+            headerCells.forEach(cell => {
+                html += '<th>' + this.escapeHtml(cell) + '</th>';
+            });
+            html += '</tr></thead>';
+        }
+
+        if (bodyCells.length > 0) {
+            html += '<tbody>';
+            bodyCells.forEach(row => {
+                html += '<tr>';
+                row.forEach(cell => {
+                    html += '<td>' + this.escapeHtml(cell) + '</td>';
+                });
+                html += '</tr>';
+            });
+            html += '</tbody>';
+        }
+
+        html += '</table>';
+        return html;
+    }
+
+    escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+    
+    saveContent() {
+        const content = this.editor.innerHTML;
+        const markdown = this.markdownSource.value;
+        
+        const blob = new Blob([`HTML:\n\n${content}\n\nMarkdown:\n\n${markdown}`], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.currentFileName || 'word-md-editor-content.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        alert('内容已保存到文件');
+    }
+    
+    updateFileName() {
+        const fileNameElement = document.getElementById('file-name');
+        const fileStatusElement = document.getElementById('file-status-icon');
+
+        if (this.currentFileName) {
+            fileNameElement.textContent = this.currentFileName;
+            fileStatusElement.textContent = '●';
+            fileStatusElement.style.color = '#28a745';
+        } else {
+            fileNameElement.textContent = '未命名';
+            fileStatusElement.textContent = '○';
+            fileStatusElement.style.color = '#6c757d';
+        }
+    }
+    
+    saveToHistory() {
+        const content = this.editor.innerHTML;
+        if (this.history.undoStack[this.history.undoStack.length - 1] === content) {
+            return;
+        }
+        
+        this.history.undoStack.push(content);
+        if (this.history.undoStack.length > this.history.maxSize) {
+            this.history.undoStack.shift();
+        }
+        this.history.redoStack = [];
+        this.updateUndoRedoButtons();
+    }
+    
+    undo() {
+        if (this.history.undoStack.length < 2) {
+            return;
+        }
+
+        const current = this.history.undoStack.pop();
+        this.history.redoStack.push(current);
+        const previous = this.history.undoStack[this.history.undoStack.length - 1];
+
+        this.editor.innerHTML = previous;
+        this.updateMarkdownSource();
+        this.updateWordCount();
+        this.updateUndoRedoButtons();
+    }
+    
+    redo() {
+        if (this.history.redoStack.length === 0) {
+            return;
+        }
+
+        const next = this.history.redoStack.pop();
+        this.history.undoStack.push(next);
+
+        this.editor.innerHTML = next;
+        this.updateMarkdownSource();
+        this.updateWordCount();
+        this.updateUndoRedoButtons();
+    }
+    
+    updateUndoRedoButtons() {
+        const undoBtn = document.getElementById('btn-undo');
+        const redoBtn = document.getElementById('btn-redo');
+        
+        undoBtn.disabled = this.history.undoStack.length < 2;
+        redoBtn.disabled = this.history.redoStack.length === 0;
+    }
+    
+    showFindModal() {
+        document.getElementById('find-modal').classList.add('show');
+        document.getElementById('find-text').focus();
+    }
+    
+    findNext() {
+        const findText = document.getElementById('find-text').value;
+        const matchCase = document.getElementById('match-case').checked;
+        
+        if (!findText) return;
+        
+        const content = this.editor.innerText;
+        const flags = matchCase ? 'g' : 'gi';
+        const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+        
+        this.findState.matches = [];
+        let match;
+        while ((match = regex.exec(content)) !== null) {
+            this.findState.matches.push({
+                start: match.index,
+                end: match.index + match[0].length
+            });
+        }
+        
+        if (this.findState.matches.length === 0) {
+            alert('未找到匹配项');
+            return;
+        }
+        
+        this.findState.currentIndex = (this.findState.currentIndex + 1) % this.findState.matches.length;
+        this.highlightFindResult(this.findState.currentIndex);
+    }
+    
+    highlightFindResult(index) {
+        const match = this.findState.matches[index];
+        if (!match) return;
+        
+        this.editor.focus();
+        this.editor.scrollTop = match.start / 10;
+        
+        alert(`找到第 ${index + 1} 个匹配项（共 ${this.findState.matches.length} 个）`);
+    }
+    
+    replace() {
+        const findText = document.getElementById('find-text').value;
+        const replaceText = document.getElementById('replace-text').value;
+        
+        if (!findText) return;
+        
+        const selection = window.getSelection();
+        if (selection.toString().toLowerCase() === findText.toLowerCase()) {
+            document.execCommand('insertText', false, replaceText);
+        }
+    }
+    
+    replaceAll() {
+        const findText = document.getElementById('find-text').value;
+        const replaceText = document.getElementById('replace-text').value;
+        
+        if (!findText) return;
+        
+        const html = this.editor.innerHTML;
+        const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        const newHtml = html.replace(regex, replaceText);
+        
+        this.editor.innerHTML = newHtml;
+        this.updateMarkdownSource();
+        this.saveToHistory();
+    }
+    
+    printDocument() {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>打印文档</title>
+                <style>
+                    body { font-family: "Calibri", "Microsoft YaHei", sans-serif; padding: 20px; }
+                    h1 { font-size: 28pt; margin: 12pt 0; }
+                    h2 { font-size: 22pt; margin: 10pt 0; }
+                    h3 { font-size: 18pt; margin: 8pt 0; }
+                    p { margin: 0 0 12pt 0; }
+                    ul, ol { margin: 6pt 0 12pt 20pt; }
+                    blockquote { border-left: 3px solid #2B579A; padding-left: 12pt; margin: 12pt 0; }
+                    code { background: #f3f2f1; padding: 2px 6px; border-radius: 3px; }
+                    pre { background: #1e1e1e; color: #d4d4d4; padding: 12pt; margin: 12pt 0; }
+                    table { border-collapse: collapse; margin: 12pt 0; width: 100%; }
+                    table td, table th { border: 1px solid #E1DFDD; padding: 6pt 10pt; }
+                </style>
+            </head>
+            <body>
+                ${this.editor.innerHTML}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+    
+    setupAutoSave() {
+        setInterval(() => {
+            const content = this.editor.innerHTML;
+            const markdown = this.markdownSource.value;
+            
+            if (content.trim() || markdown.trim()) {
+                localStorage.setItem('word-md-editor-content', content);
+                localStorage.setItem('word-md-editor-markdown', markdown);
+                localStorage.setItem('word-md-editor-last-save', new Date().toISOString());
+            }
+        }, 30000);
+        
+        const savedContent = localStorage.getItem('word-md-editor-content');
+        const savedMarkdown = localStorage.getItem('word-md-editor-markdown');
+        
+        if (savedContent) {
+            this.editor.innerHTML = savedContent;
+            this.markdownSource.value = savedMarkdown || '';
+            this.updateWordCount();
+        }
+    }
+    
+    newFile() {
+        if (this.hasUnsavedChanges()) {
+            if (!confirm('当前内容尚未保存，确定要新建吗？')) {
+                return;
+            }
+        }
+        
+        this.editor.innerHTML = '';
+        this.markdownSource.value = '';
+        this.currentFileName = null;
+        this.updateWordCount();
+        this.updateMarkdownSource();
+        this.updateUndoRedoButtons();
+    }
+    
+    openFile() {
+        try {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.md,.html,.txt,.text';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    this.loadFile(file);
+                }
+                document.body.removeChild(input);
+            };
+
+            input.click();
+        } catch (error) {
+            console.error('打开文件时出错:', error);
+        }
+    }
+
+    loadFile(file) {
+        if (!file) {
+            alert('未选择文件');
+            return;
+        }
+
+        const extension = file.name.split('.').pop().toLowerCase();
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+
+            try {
+                if (extension === 'md') {
+                    if (this.isHtmlContent(content)) {
+                        const markdown = this.htmlToMarkdown(content);
+                        this.markdownSource.value = markdown;
+                    } else {
+                        this.markdownSource.value = content;
+                    }
+                    
+                    const html = this.markdownToHtml(this.markdownSource.value);
+                    this.editor.innerHTML = html;
+                } else if (extension === 'html') {
+                    this.editor.innerHTML = content;
+                    this.markdownSource.value = content;
+                }
+
+                this.currentFileName = file.name;
+                this.updateWordCount();
+                this.updateMarkdownSource();
+                this.updateUndoRedoButtons();
+                this.updateFileName();
+            } catch (error) {
+                console.error('加载文件时出错:', error);
+                alert('加载文件时出错: ' + error.message);
+            }
+        };
+
+        reader.readAsText(file);
+    }
+    
+    saveFile() {
+        if (!this.currentFileName) {
+            alert('请先另存为文件');
+            this.saveAsFile();
+            return;
+        }
+
+        try {
+            const extension = this.currentFileName.split('.').pop().toLowerCase();
+            let content;
+
+            if (extension === 'md') {
+                content = this.markdownSource.value;
+            } else if (extension === 'html') {
+                content = this.editor.innerHTML;
+            } else {
+                content = this.editor.innerHTML;
+            }
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = this.currentFileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('保存文件时出错:', error);
+            alert('保存文件失败: ' + error.message);
+        }
+    }
+
+    saveAsFile() {
+        try {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.md,.html,.txt';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+
+            input.onchange = (e) => {
+                this.exportFile(e.target.files[0]);
+                document.body.removeChild(input);
+            };
+
+            input.click();
+        } catch (error) {
+            console.error('另存为时出错:', error);
+        }
+    }
+    
+    exportFile(file) {
+        if (!file) {
+            alert('未选择文件');
+            return;
+        }
+
+        try {
+            const extension = file.name.split('.').pop().toLowerCase();
+            let content;
+
+            if (extension === 'md') {
+                content = this.markdownSource.value;
+            } else if (extension === 'html') {
+                content = this.editor.innerHTML;
+            } else {
+                content = this.editor.innerHTML;
+            }
+
+            if (!content) {
+                alert('文件内容为空');
+                return;
+            }
+
+            const mimeType = extension === 'html' ? 'text/html' : 'text/plain';
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.name;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            this.currentFileName = file.name;
+            this.updateFileName();
+        } catch (error) {
+            console.error('导出文件时出错:', error);
+        }
+    }
+    
+    exportHTML() {
+        const content = this.editor.innerHTML;
+        const blob = new Blob([content], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'document.html';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+    
+    exportMarkdown() {
+        const content = this.markdownSource.value;
+        const blob = new Blob([content], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'document.md';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+    
+    hasUnsavedChanges() {
+        const content = this.editor.innerHTML;
+        const markdown = this.markdownSource.value;
+        return content !== this.initialContent || markdown !== this.initialMarkdown;
+    }
+    
+    closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('show');
+    }
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.editor = new WordMDEditor();
+});
+    </script>
+</body>
+</html>
