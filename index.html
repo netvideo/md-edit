@@ -2923,6 +2923,8 @@ try {
         const source = this.markdownSource;
         const viewMode = document.getElementById('view-mode');
         
+        this.clearHighlights();
+        
         if (show) {
             editor.classList.remove('show');
             source.classList.add('show');
