@@ -2907,12 +2907,12 @@ try {
         const viewMode = document.getElementById('view-mode');
         
         if (show) {
-            editor.classList.add('show');
-            source.classList.remove('show');
-            viewMode.textContent = '视图: Markdown源码';
-        } else {
             editor.classList.remove('show');
             source.classList.add('show');
+            viewMode.textContent = '视图: Markdown源码';
+        } else {
+            editor.classList.add('show');
+            source.classList.remove('show');
             viewMode.textContent = '视图: 所见即所得';
         }
     }
