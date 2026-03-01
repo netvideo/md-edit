@@ -967,6 +967,15 @@ input[type="color"]:hover {
     display: flex;
 }
 
+.highlight {
+    background-color: #ffeb3b;
+    border-radius: 2px;
+}
+
+.highlight.current {
+    background-color: #ff9800;
+}
+
 .modal-content {
     background: var(--white);
     border-radius: 4px;
@@ -3670,7 +3679,7 @@ try {
         
         if (!findText) return;
         
-        const content = this.editor.innerText;
+        const content = this.editor.innerHTML;
         const flags = matchCase ? 'g' : 'gi';
         const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
         
@@ -3679,7 +3688,8 @@ try {
         while ((match = regex.exec(content)) !== null) {
             this.findState.matches.push({
                 start: match.index,
-                end: match.index + match[0].length
+                end: match.index + match[0].length,
+                text: match[0]
             });
         }
         
@@ -3696,10 +3706,62 @@ try {
         const match = this.findState.matches[index];
         if (!match) return;
         
-        this.editor.focus();
-        this.editor.scrollTop = match.start / 10;
+        this.clearHighlights();
         
-        alert(`找到第 ${index + 1} 个匹配项（共 ${this.findState.matches.length} 个）`);
+        const range = this.createRangeFromHtmlIndex(match.start, match.end);
+        if (range) {
+            const span = document.createElement('span');
+            span.className = 'highlight current';
+            range.surroundContents(span);
+            
+            span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        this.editor.focus();
+    }
+    
+    createRangeFromHtmlIndex(start, end) {
+        const html = this.editor.innerHTML;
+        let charIndex = 0;
+        let range = document.createRange();
+        let nodeStack = [this.editor];
+        let node, foundStart = false, done = false;
+        
+        range.setStart(this.editor, 0);
+        range.setEnd(this.editor, 0);
+        
+        while (!done && (node = nodeStack.pop())) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const nextCharIndex = charIndex + node.length;
+                if (!foundStart && start >= charIndex && start <= nextCharIndex) {
+                    range.setStart(node, start - charIndex);
+                    foundStart = true;
+                }
+                if (foundStart && end >= charIndex && end <= nextCharIndex) {
+                    range.setEnd(node, end - charIndex);
+                    done = true;
+                }
+                charIndex = nextCharIndex;
+            } else {
+                let i = node.childNodes.length;
+                while (i--) {
+                    nodeStack.push(node.childNodes[i]);
+                }
+            }
+        }
+        
+        return foundStart && done ? range : null;
+    }
+    
+    clearHighlights() {
+        const highlights = this.editor.querySelectorAll('.highlight');
+        highlights.forEach(h => {
+            const parent = h.parentNode;
+            while (h.firstChild) {
+                parent.insertBefore(h.firstChild, h);
+            }
+            parent.removeChild(h);
+        });
     }
     
     replace() {
