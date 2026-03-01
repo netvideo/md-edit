@@ -2930,6 +2930,9 @@ try {
             source.classList.add('show');
             viewMode.textContent = '视图: Markdown源码';
         } else {
+            const markdown = source.value;
+            const html = this.markdownToHtml(markdown);
+            editor.innerHTML = html;
             editor.classList.add('show');
             source.classList.remove('show');
             viewMode.textContent = '视图: 所见即所得';
