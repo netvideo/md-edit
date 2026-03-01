@@ -1979,6 +1979,7 @@ editor.render();</code></pre>
                 </div>
             </div>
             <div class="modal-footer">
+                <button class="btn btn-primary" id="btn-find-prev">查找上一个</button>
                 <button class="btn btn-primary" id="btn-find-next">查找下一个</button>
                 <button class="btn btn-primary" id="btn-replace">替换</button>
                 <button class="btn btn-primary" id="btn-replace-all">全部替换</button>
@@ -2378,6 +2379,13 @@ const fontButtons = ['bold', 'italic', 'underline', 'strike', 'subscript', 'supe
             if (findNextBtn) {
                 findNextBtn.addEventListener('click', () => {
                     this.findNext();
+                });
+            }
+
+            const findPrevBtn = document.getElementById('btn-find-prev');
+            if (findPrevBtn) {
+                findPrevBtn.addEventListener('click', () => {
+                    this.findPrev();
                 });
             }
 
@@ -3702,6 +3710,35 @@ try {
         this.highlightFindResult(this.findState.currentIndex);
     }
     
+    findPrev() {
+        const findText = document.getElementById('find-text').value;
+        const matchCase = document.getElementById('match-case').checked;
+        
+        if (!findText) return;
+        
+        const content = this.editor.innerHTML;
+        const flags = matchCase ? 'g' : 'gi';
+        const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+        
+        this.findState.matches = [];
+        let match;
+        while ((match = regex.exec(content)) !== null) {
+            this.findState.matches.push({
+                start: match.index,
+                end: match.index + match[0].length,
+                text: match[0]
+            });
+        }
+        
+        if (this.findState.matches.length === 0) {
+            alert('未找到匹配项');
+            return;
+        }
+        
+        this.findState.currentIndex = (this.findState.currentIndex - 1 + this.findState.matches.length) % this.findState.matches.length;
+        this.highlightFindResult(this.findState.currentIndex);
+    }
+    
     highlightFindResult(index) {
         const match = this.findState.matches[index];
         if (!match) return;
@@ -3714,7 +3751,13 @@ try {
             span.className = 'highlight current';
             range.surroundContents(span);
             
-            span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+                span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const editorRect = this.editor.getBoundingClientRect();
+                const spanRect = span.getBoundingClientRect();
+                const relativeTop = spanRect.top - editorRect.top + this.editor.scrollTop;
+                this.editor.scrollTop = relativeTop - this.editor.clientHeight / 3;
+            }, 10);
         }
         
         this.editor.focus();
