@@ -3701,13 +3701,15 @@ try {
             return;
         }
         
-        const content = this.editor.innerText;
+        this.clearHighlights();
+        
+        const searchText = this.getPlainText();
         const flags = matchCase ? 'g' : 'gi';
         const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
         
         this.findState.matches = [];
         let match;
-        while ((match = regex.exec(content)) !== null) {
+        while ((match = regex.exec(searchText)) !== null) {
             this.findState.matches.push({
                 start: match.index,
                 end: match.index + match[0].length,
@@ -3722,6 +3724,17 @@ try {
         
         this.findState.currentIndex = (this.findState.currentIndex + 1) % this.findState.matches.length;
         this.highlightFindResult(this.findState.currentIndex);
+    }
+    
+    getPlainText() {
+        const editor = this.editor;
+        let text = '';
+        const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        while (node = walker.nextNode()) {
+            text += node.textContent;
+        }
+        return text;
     }
     
     findInSource(findText, matchCase, next) {
@@ -3767,7 +3780,9 @@ try {
             return;
         }
         
-        const content = this.editor.innerText;
+        this.clearHighlights();
+        
+        const content = this.getPlainText();
         const flags = matchCase ? 'g' : 'gi';
         const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
         
