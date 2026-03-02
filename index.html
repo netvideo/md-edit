@@ -3698,8 +3698,6 @@ try {
         
         if (!findText) return;
         
-        this.findState.currentIndex = -1;
-        
         if (this.isSourceMode()) {
             this.findInSource(findText, matchCase, true);
             return;
@@ -3745,24 +3743,50 @@ try {
         const source = this.markdownSource;
         const text = source.value;
         
-        const currentSearchText = this.findState.currentText;
-        const currentMatchCase = this.findState.matchCase;
+        // Always re-search to avoid state issues
+        const flags = matchCase ? 'g' : 'gi';
+        const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
         
-        if (currentSearchText !== findText || currentMatchCase !== matchCase) {
-            const flags = matchCase ? 'g' : 'gi';
-            const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
-            
-            this.findState.matches = [];
-            this.findState.currentText = findText;
-            this.findState.matchCase = matchCase;
-            
-            let match;
-            while ((match = regex.exec(text)) !== null) {
-                this.findState.matches.push({
-                    start: match.index,
-                    end: match.index + match[0].length
-                });
-            }
+        const matches = [];
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            matches.push({
+                start: match.index,
+                end: match.index + match[0].length
+            });
+        }
+        
+        if (matches.length === 0) {
+            alert('未找到匹配项');
+            return;
+        }
+        
+        // Determine which match to select
+        let currentIndex;
+        if (next) {
+            currentIndex = (this.findState.currentIndex + 1) % matches.length;
+        } else {
+            currentIndex = (this.findState.currentIndex - 1 + matches.length) % matches.length;
+        }
+        
+        // Update state
+        this.findState.currentIndex = currentIndex;
+        this.findState.matches = matches;
+        this.findState.currentText = findText;
+        this.findState.matchCase = matchCase;
+        
+        // Select the match
+        const matchPos = matches[currentIndex];
+        source.focus();
+        source.setSelectionRange(matchPos.start, matchPos.end);
+        
+        // Scroll to the match
+        const lineHeight = 20;
+        const textBeforeMatch = text.substring(0, matchPos.start);
+        const lines = textBeforeMatch.split('\n').length - 1;
+        const scrollPos = lines * lineHeight;
+        source.scrollTop = scrollPos - source.clientHeight / 2;
+    }
             
             if (this.findState.matches.length === 0) {
                 alert('未找到匹配项');
