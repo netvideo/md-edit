@@ -3768,7 +3768,12 @@ try {
         const matchPos = this.findState.matches[this.findState.currentIndex];
         source.focus();
         source.setSelectionRange(matchPos.start, matchPos.end);
-        source.scrollTop = source.scrollTop + source.clientHeight / 3;
+        
+        const lineHeight = 20;
+        const textBeforeMatch = text.substring(0, matchPos.start);
+        const lines = textBeforeMatch.split('\n').length - 1;
+        const scrollPos = lines * lineHeight;
+        source.scrollTop = scrollPos - source.clientHeight / 2;
     }
     
     findPrev() {
