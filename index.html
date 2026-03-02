@@ -2017,7 +2017,9 @@ class WordMDEditor {
         };
         this.findState = {
             currentIndex: -1,
-            matches: []
+            matches: [],
+            currentText: '',
+            matchCase: false
         };
         this.formatPainterState = {
             active: false,
@@ -3742,21 +3744,32 @@ try {
     findInSource(findText, matchCase, next) {
         const source = this.markdownSource;
         const text = source.value;
-        const flags = matchCase ? 'g' : 'gi';
-        const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
         
-        this.findState.matches = [];
-        let match;
-        while ((match = regex.exec(text)) !== null) {
-            this.findState.matches.push({
-                start: match.index,
-                end: match.index + match[0].length
-            });
-        }
+        const currentSearchText = this.findState.currentText;
+        const currentMatchCase = this.findState.matchCase;
         
-        if (this.findState.matches.length === 0) {
-            alert('未找到匹配项');
-            return;
+        if (currentSearchText !== findText || currentMatchCase !== matchCase) {
+            const flags = matchCase ? 'g' : 'gi';
+            const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+            
+            this.findState.matches = [];
+            this.findState.currentText = findText;
+            this.findState.matchCase = matchCase;
+            
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                this.findState.matches.push({
+                    start: match.index,
+                    end: match.index + match[0].length
+                });
+            }
+            
+            if (this.findState.matches.length === 0) {
+                alert('未找到匹配项');
+                return;
+            }
+            
+            this.findState.currentIndex = -1;
         }
         
         if (next) {
