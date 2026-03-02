@@ -3686,13 +3686,22 @@ try {
         document.getElementById('find-text').focus();
     }
     
+    isSourceMode() {
+        return this.markdownSource.classList.contains('show');
+    }
+    
     findNext() {
         const findText = document.getElementById('find-text').value;
         const matchCase = document.getElementById('match-case').checked;
         
         if (!findText) return;
         
-        const content = this.editor.innerHTML;
+        if (this.isSourceMode()) {
+            this.findInSource(findText, matchCase, true);
+            return;
+        }
+        
+        const content = this.editor.innerText;
         const flags = matchCase ? 'g' : 'gi';
         const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
         
@@ -3715,13 +3724,50 @@ try {
         this.highlightFindResult(this.findState.currentIndex);
     }
     
+    findInSource(findText, matchCase, next) {
+        const source = this.markdownSource;
+        const text = source.value;
+        const flags = matchCase ? 'g' : 'gi';
+        const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+        
+        this.findState.matches = [];
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            this.findState.matches.push({
+                start: match.index,
+                end: match.index + match[0].length
+            });
+        }
+        
+        if (this.findState.matches.length === 0) {
+            alert('未找到匹配项');
+            return;
+        }
+        
+        if (next) {
+            this.findState.currentIndex = (this.findState.currentIndex + 1) % this.findState.matches.length;
+        } else {
+            this.findState.currentIndex = (this.findState.currentIndex - 1 + this.findState.matches.length) % this.findState.matches.length;
+        }
+        
+        const matchPos = this.findState.matches[this.findState.currentIndex];
+        source.focus();
+        source.setSelectionRange(matchPos.start, matchPos.end);
+        source.scrollTop = source.scrollTop + source.clientHeight / 3;
+    }
+    
     findPrev() {
         const findText = document.getElementById('find-text').value;
         const matchCase = document.getElementById('match-case').checked;
         
         if (!findText) return;
         
-        const content = this.editor.innerHTML;
+        if (this.isSourceMode()) {
+            this.findInSource(findText, matchCase, false);
+            return;
+        }
+        
+        const content = this.editor.innerText;
         const flags = matchCase ? 'g' : 'gi';
         const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
         
@@ -3750,7 +3796,7 @@ try {
         
         this.clearHighlights();
         
-        const range = this.createRangeFromHtmlIndex(match.start, match.end);
+        const range = this.createRangeFromTextIndex(match.start, match.end);
         if (range) {
             const span = document.createElement('span');
             span.className = 'highlight current';
@@ -3768,15 +3814,15 @@ try {
         this.editor.focus();
     }
     
-    createRangeFromHtmlIndex(start, end) {
-        const html = this.editor.innerHTML;
+    createRangeFromTextIndex(start, end) {
+        const editor = this.editor;
         let charIndex = 0;
         let range = document.createRange();
-        let nodeStack = [this.editor];
+        let nodeStack = [editor];
         let node, foundStart = false, done = false;
         
-        range.setStart(this.editor, 0);
-        range.setEnd(this.editor, 0);
+        range.setStart(editor, 0);
+        range.setEnd(editor, 0);
         
         while (!done && (node = nodeStack.pop())) {
             if (node.nodeType === Node.TEXT_NODE) {
@@ -3790,7 +3836,12 @@ try {
                     done = true;
                 }
                 charIndex = nextCharIndex;
-            } else {
+            } else if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('highlight')) {
+                let i = node.childNodes.length;
+                while (i--) {
+                    nodeStack.push(node.childNodes[i]);
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
                 let i = node.childNodes.length;
                 while (i--) {
                     nodeStack.push(node.childNodes[i]);
