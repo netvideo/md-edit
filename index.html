@@ -2926,14 +2926,14 @@ try {
         this.clearHighlights();
         
         if (show) {
-            editor.classList.remove('show');
+            editor.classList.add('show');
             source.classList.add('show');
             viewMode.textContent = '视图: Markdown源码';
         } else {
             const markdown = source.value;
             const html = this.markdownToHtml(markdown);
             editor.innerHTML = html;
-            editor.classList.add('show');
+            editor.classList.remove('show');
             source.classList.remove('show');
             viewMode.textContent = '视图: 所见即所得';
         }
